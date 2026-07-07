@@ -7,17 +7,14 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { WEB_UI_DIST } from './lib/paths';
 
-/** Shared Nest app factory — used by both the local dev server (main.ts) and the Vercel serverless entrypoint (api/index.ts) */
 export async function createApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.use(cookieParser());
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? true,
+    origin: true,
     credentials: true,
   });
-  // Serves the built Admin UI's hashed JS/CSS assets. SPA/login HTML fallback
-  // routes live in StaticUiController (index: false so "/" doesn't shadow the OIDC routes).
   app.useStaticAssets(WEB_UI_DIST, { prefix: '/admin/ui', index: false });
   app.useGlobalPipes(
     new ValidationPipe({

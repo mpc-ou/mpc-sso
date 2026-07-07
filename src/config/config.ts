@@ -7,7 +7,6 @@ export interface AppConfig {
   adminSecret: string;
   serviceApiKey: string;
   sessionSecret: string;
-  frontendUrl: string;
   google: {
     clientId: string;
     clientSecret: string;
@@ -40,7 +39,6 @@ export function configuration(): AppConfig {
     adminSecret: requireEnv('ADMIN_SECRET'),
     serviceApiKey: requireEnv('SERVICE_API_KEY'),
     sessionSecret: requireEnv('SESSION_SECRET'),
-    frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
