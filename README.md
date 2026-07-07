@@ -45,7 +45,6 @@ Chạy song song cả NestJS Backend và React Frontend:
 pnpm dev:full
 ```
 - Server API chạy tại: `http://localhost:3000`
-- Admin UI & Login Page chạy tại: `http://localhost:5173` (được proxy qua backend `/admin/ui` khi chạy build thành phẩm).
 
 ---
 
@@ -87,14 +86,3 @@ web-ui/                   # React Frontend (Vite)
 | `pnpm test:e2e` | Chạy Integration/E2E tests |
 | `pnpm prisma:studio` | Xem và chỉnh sửa trực tiếp dữ liệu qua giao diện Web |
 | `pnpm keys:generate` | Tạo và in ra cặp khóa JWT ES256 |
-
----
-
-## 5. Điểm nổi bật đã triển khai
-
-1. **Gộp bảng User & Member**: Đưa các trường thông tin cá nhân gộp chung vào bảng `User` để giảm số lượng kết nối bảng (join), tăng hiệu năng và tránh sai lệch dữ liệu.
-2. **Nén ảnh đại diện tự động**: Tích hợp luồng upload ảnh Cloudinary tự động căn giữa khuôn mặt (`gravity: 'face'`), nén về kích cỡ chuẩn `512x512` và tự xóa ảnh cũ của người dùng trên Cloudinary để giảm tải dung lượng lưu trữ.
-3. **Bộ chọn Select Trigger cải tiến**: Tự khắc phục hạn chế hiển thị khóa thô của Select Primitive bằng cách tìm và map hiển thị nhãn thân thiện (Friendly label) ngay cả khi tùy chọn chưa được tải lên DOM.
-4. **An toàn khi thao tác nguy hiểm**: Tất cả thao tác vô hiệu hóa tài khoản, kích hoạt lại tài khoản và xóa vĩnh viễn đều được tích hợp hộp thoại xác nhận của trình duyệt (`confirm(...)`) tránh thao tác nhầm.
-5. **Cờ Cựu thành viên ảo**: Các API tương thích ngoại vi trả thêm các trường ảo (`isAlumni`, `Alumni`) cho các thành viên trực thuộc phòng ban quá 4 năm (chưa thiết lập ngày kết thúc) phục vụ các client ngoài.
-6. **Khôi phục mật khẩu inline**: Cho phép gửi email khôi phục và đặt lại mật khẩu trực quan ngay tại các màn hình đăng nhập chung và đăng nhập OIDC mà không làm mất phiên chuyển tiếp.
