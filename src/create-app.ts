@@ -1,7 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -25,24 +24,25 @@ export async function createApp(): Promise<NestExpressApplication> {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('MPClub SSO API')
-    .setDescription(
-      'OIDC provider + User/Member/Department management. See PLAN.md for full architecture.',
-    )
-    .setVersion('1.0')
-    .addApiKey(
-      { type: 'apiKey', name: 'X-Admin-Secret', in: 'header' },
-      'admin-secret',
-    )
-    .addApiKey(
-      { type: 'apiKey', name: 'X-Service-Key', in: 'header' },
-      'service-key',
-    )
-    .addBearerAuth()
-    .build();
-  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, swaggerDocument);
+  if (process.env.NODE_ENV !== 'production') {
+    const { DocumentBuilder, SwaggerModule } = await import('@nestjs/swagger');
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('MPClub SSO API')
+      .setDescription('OIDC provider + User/Member/Department management.')
+      .setVersion('1.0')
+      .addApiKey(
+        { type: 'apiKey', name: 'X-Admin-Secret', in: 'header' },
+        'admin-secret',
+      )
+      .addApiKey(
+        { type: 'apiKey', name: 'X-Service-Key', in: 'header' },
+        'service-key',
+      )
+      .addBearerAuth()
+      .build();
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, swaggerDocument);
+  }
 
   return app;
 }
