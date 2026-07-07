@@ -1,8 +1,13 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "version": 2,
+  "buildCommand": "pnpm vercel-build",
+  "outputDirectory": ".",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "web-ui/dist/**"
+      "includeFiles": "web-ui/dist/**",
+      "memory": 1024,
+      "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
 }
