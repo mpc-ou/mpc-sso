@@ -3,7 +3,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "{dist/src/**,web-ui/dist/**,node_modules/.prisma/**,node_modules/@prisma/client/**}",
+      "includeFiles": "{dist/src/**/*.js,dist/src/**/*.json,web-ui/dist/**,node_modules/.prisma/**,node_modules/@prisma/client/**}",
       "memory": 1024,
       "maxDuration": 30
     }
