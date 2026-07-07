@@ -1,0 +1,54 @@
+{
+  "common": {
+    "usernameOrEmail": "Username or Email",
+    "password": "Password",
+    "login": "Sign in",
+    "loggingIn": "Signing in...",
+    "loginFailed": "Login failed",
+    "language": "Language",
+    "forgotPassword": "Forgot password?",
+    "backToLogin": "Back to sign in",
+    "email": "Email Address",
+    "sendResetLink": "Send reset link",
+    "sending": "Sending...",
+    "emailRequired": "Please enter your email",
+    "forgotSuccess": "If that email exists, a reset link has been sent to your inbox.",
+    "forgotTitle": "Forgot Password",
+    "forgotSubtitle": "Enter your email to receive a password reset link.",
+    "resetTitle": "Reset Password",
+    "resetSubtitle": "Please enter a new password for your account.",
+    "resetSuccess": "Password reset successfully. You can now log in with your new password.",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "min8Chars": "Minimum 8 characters",
+    "repeatPassword": "Confirm your new password",
+    "updating": "Updating...",
+    "updatePassword": "Update Password",
+    "invalidLinkTitle": "Invalid Link",
+    "invalidLinkSubtitle": "Your password reset link is invalid or has expired. Please request a new one."
+  },
+  "validation": {
+    "loginRequired": "Username or email is required",
+    "passwordRequired": "Password is required"
+  },
+  "adminLogin": {
+    "heading": "MPClub SSO — Admin",
+    "sideLabel": "Admin Console",
+    "sideTitle": "SSO <1>Administration</1>",
+    "sideSubtitle": "Faculty of Information Technology — HCMOU"
+  },
+  "oidcLogin": {
+    "headingFallback": "Who are you?",
+    "headingWithClient": "Sign in to <1>{{clientName}}</1>",
+    "subtitle": "Sign in to your account so we know who you are!",
+    "submitLabel": "Sign in with Email",
+    "googleDivider": "Or continue with",
+    "googleLabel": "Login with Google",
+    "sideLabel": "✨ Slogan",
+    "sideTitle": "Where there's a bug,<1/>there's <2>MPC</2>!",
+    "sideSubtitle": "Faculty of Information Technology — HCMOU",
+    "placeholderEmail": "m.example@gmail.com",
+    "missingRequestId": "Missing request_id, please try logging in again from the application.",
+    "sessionExpired": "Login session has expired, please try again from the beginning."
+  }
+}

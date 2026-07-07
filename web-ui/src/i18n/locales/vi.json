@@ -1,0 +1,54 @@
+{
+  "common": {
+    "usernameOrEmail": "Username hoặc Email",
+    "password": "Mật khẩu",
+    "login": "Đăng nhập",
+    "loggingIn": "Đang đăng nhập...",
+    "loginFailed": "Đăng nhập thất bại",
+    "language": "Ngôn ngữ",
+    "forgotPassword": "Quên mật khẩu?",
+    "backToLogin": "Quay lại đăng nhập",
+    "email": "Địa chỉ Email",
+    "sendResetLink": "Gửi liên kết đặt lại",
+    "sending": "Đang gửi...",
+    "emailRequired": "Vui lòng nhập email",
+    "forgotSuccess": "Nếu email tồn tại trên hệ thống, liên kết đặt lại mật khẩu đã được gửi vào hòm thư của bạn.",
+    "forgotTitle": "Quên mật khẩu",
+    "forgotSubtitle": "Nhập email liên kết với tài khoản để nhận liên kết đặt lại mật khẩu.",
+    "resetTitle": "Đặt lại mật khẩu",
+    "resetSubtitle": "Vui lòng nhập mật khẩu mới cho tài khoản của bạn.",
+    "resetSuccess": "Đặt lại mật khẩu thành công. Bạn đã có thể đăng nhập bằng mật khẩu mới.",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu mới",
+    "min8Chars": "Tối thiểu 8 ký tự",
+    "repeatPassword": "Nhập lại mật khẩu mới",
+    "updating": "Đang cập nhật...",
+    "updatePassword": "Cập nhật mật khẩu",
+    "invalidLinkTitle": "Liên kết không hợp lệ",
+    "invalidLinkSubtitle": "Liên kết đặt lại mật khẩu của bạn không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu một liên kết mới."
+  },
+  "validation": {
+    "loginRequired": "Bắt buộc nhập username hoặc email",
+    "passwordRequired": "Bắt buộc nhập mật khẩu"
+  },
+  "adminLogin": {
+    "heading": "MPClub SSO — Admin",
+    "sideLabel": "Admin Console",
+    "sideTitle": "Quản trị hệ thống <1>SSO</1>",
+    "sideSubtitle": "Faculty of Information Technology — HCMOU"
+  },
+  "oidcLogin": {
+    "headingFallback": "Bạn là ai đó?",
+    "headingWithClient": "Đăng nhập vào <1>{{clientName}}</1>",
+    "subtitle": "Đăng nhập vào tài khoản của bạn để tụi mình biết bạn là ai nè!",
+    "submitLabel": "Đăng nhập bằng Email",
+    "googleDivider": "Hoặc tiếp tục với",
+    "googleLabel": "Đăng nhập bằng Google",
+    "sideLabel": "✨ Slogan",
+    "sideTitle": "Where there's a bug,<1/>there's <2>MPC</2>!",
+    "sideSubtitle": "Faculty of Information Technology — HCMOU",
+    "placeholderEmail": "m.example@gmail.com",
+    "missingRequestId": "Thiếu request_id, vui lòng thử đăng nhập lại từ ứng dụng.",
+    "sessionExpired": "Phiên đăng nhập đã hết hạn, vui lòng thử lại từ đầu."
+  }
+}

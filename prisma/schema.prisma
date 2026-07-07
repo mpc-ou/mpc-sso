@@ -1,0 +1,214 @@
+generator client {
+  provider      = "prisma-client-js"
+  // "native" for local dev, "rhel-openssl-3.0.x" matches Vercel's Lambda runtime
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WebRole {
+  ADMIN
+  COLLABORATOR
+  MEMBER
+  GUEST
+}
+
+enum ClubPosition {
+  PRESIDENT
+  VICE_PRESIDENT
+  DEPARTMENT_LEADER
+  DEPARTMENT_VICE_LEADER
+  DEPARTMENT_MEMBER
+  COLLABORATOR
+  ADVISOR
+}
+
+// ═══════════════════════════════════════════
+// TABLES
+// ═══════════════════════════════════════════
+
+model User {
+  id         String  @id @default(cuid())
+  username   String  @unique
+  email      String? @unique
+  password   String? // hashed (argon2)
+  googleId   String? @unique // Google OAuth sub
+  webRole    WebRole @default(GUEST)
+  isDisabled Boolean @default(false)
+
+  // Profile fields (merged from Member)
+  firstName  String?
+  middleName String?
+  lastName   String?
+  dob        DateTime?
+  address    String?
+  className  String?   @db.VarChar(10)
+  mssv       String?
+  faculty    String?
+  phone      String?
+  avatar     String?
+  bio        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordReset[]
+  clubRoles      ClubRole[]
+
+  @@map("users")
+}
+
+model Department {
+  id       String  @id @default(cuid())
+  name     String
+  code     String  @unique
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clubRoles ClubRole[]
+
+  @@map("departments")
+}
+
+model ClubRole {
+  id           String       @id @default(cuid())
+  userId       String
+  departmentId String?
+  position     ClubPosition
+  term         Int?
+  note         String?
+  startAt      DateTime
+  endAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([departmentId])
+  @@map("club_roles")
+}
+
+/// OAuth2 Client
+model Client {
+  id               String  @id @default(cuid())
+  clientId         String  @unique
+  clientSecretHash String
+  name             String
+  redirectUris     String // JSON array string
+  allowedScopes    String  @default("openid profile email")
+  isActive         Boolean @default(true)
+  createdBy        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+
+  @@map("clients")
+}
+
+model PendingAuthorization {
+  id                  String   @id @default(cuid())
+  clientId            String
+  redirectUri         String
+  scope               String
+  state               String
+  codeChallenge       String
+  codeChallengeMethod String   @default("S256")
+  nonce               String?
+  expiresAt           DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("pending_authorizations")
+}
+
+model AuthCode {
+  id                  String   @id @default(cuid())
+  code                String   @unique
+  clientId            String
+  userId              String
+  redirectUri         String
+  scope               String
+  codeChallenge       String
+  codeChallengeMethod String   @default("S256")
+  nonce               String?
+  expiresAt           DateTime
+  used                Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([code])
+  @@map("auth_codes")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  clientId  String
+  scope     String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model AccessToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  clientId  String
+  scope     String
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@map("access_tokens")
+}
+
+model AdminSession {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  userId    String
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@map("admin_sessions")
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("password_resets")
+}
