@@ -4,7 +4,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "web-ui/dist/**",
+      "includeFiles": "{dist/**,web-ui/dist/**,node_modules/.prisma/**,node_modules/@prisma/client/**}",
       "memory": 1024,
       "maxDuration": 30
     }

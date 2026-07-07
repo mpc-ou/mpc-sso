@@ -1,6 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import serverlessHttp from 'serverless-http';
-import { createApp } from '../src/create-app';
+// Import from pre-built dist — compiled by `nest build` in vercel-build step
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { createApp } = require('../dist/create-app') as { createApp: () => Promise<import('@nestjs/platform-express').NestExpressApplication> };
 
 type ServerlessHandler = (
   req: IncomingMessage,
