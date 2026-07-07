@@ -47,7 +47,7 @@
     "class-validator": "^0.15.1",
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",
-    "jose": "^6.2.3",
+    "jose": "^4.15.9",
     "nodemailer": "^9.0.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
