@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "outputDirectory": ".",
   "functions": {
     "api/index.ts": {
       "includeFiles": "{dist/src/**,web-ui/dist/**,node_modules/.prisma/**,node_modules/@prisma/client/**}",
