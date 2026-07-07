@@ -1,10 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "pnpm vercel-build",
-  "outputDirectory": ".",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "{dist/**,web-ui/dist/**,node_modules/.prisma/**,node_modules/@prisma/client/**}",
+      "includeFiles": "{dist/src/**,web-ui/dist/**,node_modules/.prisma/**,node_modules/@prisma/client/**}",
       "memory": 1024,
       "maxDuration": 30
     }
