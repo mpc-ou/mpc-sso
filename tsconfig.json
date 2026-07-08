@@ -23,5 +23,5 @@
     "noFallthroughCasesInSwitch": false,
     "types": ["jest", "node"]
   },
-  "exclude": ["node_modules", "dist", "_old_demo", "web-ui"]
+  "exclude": ["node_modules", "dist", "_old_demo", "web-ui", "scripts"]
 }

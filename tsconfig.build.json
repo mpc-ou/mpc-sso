@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "_old_demo", "prisma", "api", "web-ui"]
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "_old_demo", "prisma", "api", "web-ui", "scripts"]
 }

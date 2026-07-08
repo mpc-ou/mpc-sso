@@ -1,0 +1,11 @@
+.git
+node_modules
+dist
+coverage
+web-ui/node_modules
+web-ui/dist
+_old_demo
+.env
+.env.*
+.vercel
+*.log
