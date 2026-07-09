@@ -24,25 +24,23 @@ export async function createApp(): Promise<NestExpressApplication> {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  if (process.env.NODE_ENV !== 'production') {
-    const { DocumentBuilder, SwaggerModule } = await import('@nestjs/swagger');
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('MPClub SSO API')
-      .setDescription('OIDC provider + User/Member/Department management.')
-      .setVersion('1.0')
-      .addApiKey(
-        { type: 'apiKey', name: 'X-Admin-Secret', in: 'header' },
-        'admin-secret',
-      )
-      .addApiKey(
-        { type: 'apiKey', name: 'X-Service-Key', in: 'header' },
-        'service-key',
-      )
-      .addBearerAuth()
-      .build();
-    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('docs', app, swaggerDocument);
-  }
+  const { DocumentBuilder, SwaggerModule } = await import('@nestjs/swagger');
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('MPClub SSO API')
+    .setDescription('OIDC provider + User/Member/Department management.')
+    .setVersion('1.0')
+    .addApiKey(
+      { type: 'apiKey', name: 'X-Admin-Secret', in: 'header' },
+      'admin-secret',
+    )
+    .addApiKey(
+      { type: 'apiKey', name: 'X-Service-Key', in: 'header' },
+      'service-key',
+    )
+    .addBearerAuth()
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, swaggerDocument);
 
   return app;
 }

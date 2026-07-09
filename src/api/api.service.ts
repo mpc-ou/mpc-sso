@@ -122,6 +122,10 @@ export class ApiService {
         return {
           id: u.id,
           userId: u.id,
+          username: u.username,
+          email: u.email,
+          webRole: u.webRole,
+          isDisabled: u.isDisabled,
           firstName: u.firstName ?? '',
           middleName: u.middleName,
           lastName: u.lastName ?? '',
@@ -156,6 +160,10 @@ export class ApiService {
     return {
       id: u.id,
       userId: u.id,
+      username: u.username,
+      email: u.email,
+      webRole: u.webRole,
+      isDisabled: u.isDisabled,
       firstName: u.firstName ?? '',
       middleName: u.middleName,
       lastName: u.lastName ?? '',
