@@ -22,22 +22,22 @@ export interface CreateUserPayload {
 }
 
 export interface UpdateUserPayload {
-  email?: string;
+  email?: string | null;
   webRole?: WebRole;
   isDisabled?: boolean;
   password?: string;
 
   firstName?: string;
-  middleName?: string;
+  middleName?: string | null;
   lastName?: string;
-  dob?: string;
-  address?: string;
-  className?: string;
-  mssv?: string;
-  faculty?: string;
-  phone?: string;
-  avatar?: string;
-  bio?: string;
+  dob?: string | null;
+  address?: string | null;
+  className?: string | null;
+  mssv?: string | null;
+  faculty?: string | null;
+  phone?: string | null;
+  avatar?: string | null;
+  bio?: string | null;
 }
 
 export const usersApi = {

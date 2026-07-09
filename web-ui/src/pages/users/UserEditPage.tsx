@@ -124,21 +124,21 @@ export function UserEditPage() {
   const updateMutation = useMutation({
     mutationFn: (values: FormValues) =>
       usersApi.update(id!, {
-        email: values.email || undefined,
+        email: values.email || null,
         webRole: values.webRole,
         isDisabled: values.isDisabled,
         password: values.password || undefined,
         firstName: values.firstName,
-        middleName: values.middleName || undefined,
+        middleName: values.middleName || null,
         lastName: values.lastName,
-        dob: values.dob ? new Date(values.dob).toISOString() : undefined,
-        address: values.address || undefined,
-        className: values.className || undefined,
-        mssv: values.mssv || undefined,
-        faculty: values.faculty || undefined,
-        phone: values.phone || undefined,
-        avatar: values.avatar || undefined,
-        bio: values.bio || undefined,
+        dob: values.dob ? new Date(values.dob).toISOString() : null,
+        address: values.address || null,
+        className: values.className || null,
+        mssv: values.mssv || null,
+        faculty: values.faculty || null,
+        phone: values.phone || null,
+        avatar: values.avatar || null,
+        bio: values.bio || null,
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['users'] });

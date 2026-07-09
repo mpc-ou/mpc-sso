@@ -12,7 +12,7 @@ import {
 export class UpdateUserDto {
   @IsOptional()
   @IsEmail()
-  email?: string;
+  email?: string | null;
 
   @IsOptional()
   @IsEnum(WebRole)
@@ -32,7 +32,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  middleName?: string;
+  middleName?: string | null;
 
   @IsOptional()
   @IsString()
@@ -41,33 +41,33 @@ export class UpdateUserDto {
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  dob?: Date;
+  dob?: Date | null;
 
   @IsOptional()
   @IsString()
-  address?: string;
+  address?: string | null;
 
   @IsOptional()
   @IsString()
-  className?: string;
+  className?: string | null;
 
   @IsOptional()
   @IsString()
-  mssv?: string;
+  mssv?: string | null;
 
   @IsOptional()
   @IsString()
-  faculty?: string;
+  faculty?: string | null;
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone?: string | null;
 
   @IsOptional()
   @IsString()
-  avatar?: string;
+  avatar?: string | null;
 
   @IsOptional()
   @IsString()
-  bio?: string;
+  bio?: string | null;
 }

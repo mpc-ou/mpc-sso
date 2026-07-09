@@ -12,12 +12,12 @@ export interface CreateClubRolePayload {
 }
 
 export interface UpdateClubRolePayload {
-  departmentId?: string;
+  departmentId?: string | null;
   position?: ClubPosition;
-  term?: number;
-  note?: string;
+  term?: number | null;
+  note?: string | null;
   startAt?: string;
-  endAt?: string;
+  endAt?: string | null;
 }
 
 export const clubRolesApi = {

@@ -5,7 +5,7 @@ import { IsDate, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 export class UpdateClubRoleDto {
   @IsOptional()
   @IsString()
-  departmentId?: string;
+  departmentId?: string | null;
 
   @IsOptional()
   @IsEnum(ClubPosition)
@@ -13,11 +13,11 @@ export class UpdateClubRoleDto {
 
   @IsOptional()
   @IsInt()
-  term?: number;
+  term?: number | null;
 
   @IsOptional()
   @IsString()
-  note?: string;
+  note?: string | null;
 
   @IsOptional()
   @Type(() => Date)
@@ -27,5 +27,5 @@ export class UpdateClubRoleDto {
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  endAt?: Date;
+  endAt?: Date | null;
 }

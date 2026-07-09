@@ -107,17 +107,29 @@ function RoleDialog({
 
   const mutation = useMutation({
     mutationFn: (values: RoleFormValues) => {
-      const payload = {
+      const startAt = new Date(values.startAt).toISOString();
+      const endAt = values.endAt ? new Date(values.endAt).toISOString() : null;
+      const term = values.term === '' ? null : Number(values.term);
+
+      if (editingRole) {
+        return clubRolesApi.update(editingRole.id, {
+          departmentId: values.departmentId || null,
+          position: values.position,
+          term,
+          note: values.note || null,
+          startAt,
+          endAt,
+        });
+      }
+      return clubRolesApi.create({
+        userId,
         departmentId: values.departmentId || undefined,
         position: values.position,
-        term: values.term === '' ? undefined : Number(values.term),
+        term: term ?? undefined,
         note: values.note || undefined,
-        startAt: new Date(values.startAt).toISOString(),
-        endAt: values.endAt ? new Date(values.endAt).toISOString() : undefined,
-      };
-      return editingRole
-        ? clubRolesApi.update(editingRole.id, payload)
-        : clubRolesApi.create({ ...payload, userId });
+        startAt,
+        endAt: endAt ?? undefined,
+      });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['users', userId] });
