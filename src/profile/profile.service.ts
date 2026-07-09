@@ -24,6 +24,11 @@ export class ProfileService {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
+        firstName: dto.firstName,
+        middleName: dto.middleName,
+        lastName: dto.lastName,
+        dob: dto.dob != null ? new Date(dto.dob) : undefined,
+        mssv: dto.mssv,
         avatar: dto.avatar,
         phone: dto.phone,
         address: dto.address,
