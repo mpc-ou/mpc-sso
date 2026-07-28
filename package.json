@@ -35,6 +35,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/seed.ts"
   },
   "dependencies": {
+    "@nestjs/cli": "^11.0.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -48,15 +49,14 @@
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",
     "jose": "^4.15.9",
-    "nodemailer": "^9.0.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "prisma": "^6.19.3",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.18.0",
     "rxjs": "^7.8.1",
     "serverless-http": "^4.0.0",
     "swagger-ui-express": "^5.0.1",
-    "@nestjs/cli": "^11.0.0",
-    "prisma": "^6.19.3",
     "typescript": "^5.7.3"
   },
   "devDependencies": {
@@ -69,7 +69,6 @@
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.2.0",
     "@types/node": "^24.0.0",
-    "@types/nodemailer": "^8.0.1",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/supertest": "^7.0.0",

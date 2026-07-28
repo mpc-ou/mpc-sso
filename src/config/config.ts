@@ -12,11 +12,8 @@ export interface AppConfig {
     clientSecret: string;
     callbackUrl: string;
   };
-  smtp: {
-    host: string;
-    port: number;
-    user: string;
-    pass: string;
+  resend: {
+    apiKey: string;
     from: string;
   };
 }
@@ -44,11 +41,8 @@ export function configuration(): AppConfig {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
       callbackUrl: process.env.GOOGLE_CALLBACK_URL ?? '',
     },
-    smtp: {
-      host: process.env.SMTP_HOST ?? '',
-      port: parseInt(process.env.SMTP_PORT ?? '587', 10),
-      user: process.env.SMTP_USER ?? '',
-      pass: process.env.SMTP_PASS ?? '',
+    resend: {
+      apiKey: process.env.RESEND_API_KEY ?? '',
       from: process.env.EMAIL_FROM ?? 'noreply@mpclub.dev',
     },
   };
