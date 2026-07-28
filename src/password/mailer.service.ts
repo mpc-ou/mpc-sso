@@ -1,32 +1,50 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { promises as dns } from 'node:dns';
 import type { AppConfig } from '../config/config';
 
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
-  private transporter: nodemailer.Transporter | null = null;
 
   constructor(private readonly configService: ConfigService<AppConfig, true>) {}
 
-  private getTransporter(): nodemailer.Transporter {
-    if (!this.transporter) {
-      const smtp = this.configService.get('smtp', { infer: true });
-      this.transporter = nodemailer.createTransport({
-        host: smtp.host,
-        port: smtp.port,
-        secure: smtp.port === 465,
-        auth: smtp.user ? { user: smtp.user, pass: smtp.pass } : undefined,
-      });
+  /**
+   * nodemailer resolves both A and AAAA records for the SMTP host and picks
+   * one at random to connect to. Hosts without outbound IPv6 routing (common
+   * on serverless/containers) then fail with ENETUNREACH whenever it picks
+   * the AAAA address. Resolving the A record ourselves and connecting to
+   * that literal IPv4 address sidesteps the random pick entirely; `servername`
+   * keeps SNI/cert validation pointed at the real hostname.
+   */
+  private async createTransporter(): Promise<nodemailer.Transporter> {
+    const smtp = this.configService.get('smtp', { infer: true });
+
+    let host = smtp.host;
+    try {
+      const addresses = await dns.resolve4(smtp.host);
+      if (addresses[0]) host = addresses[0];
+    } catch (err) {
+      this.logger.warn(
+        `IPv4 lookup for SMTP host ${smtp.host} failed, falling back to hostname resolution: ${(err as Error).message}`,
+      );
     }
-    return this.transporter;
+
+    return nodemailer.createTransport({
+      host,
+      port: smtp.port,
+      secure: smtp.port === 465,
+      auth: smtp.user ? { user: smtp.user, pass: smtp.pass } : undefined,
+      tls: { servername: smtp.host },
+    });
   }
 
   async sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
     const smtp = this.configService.get('smtp', { infer: true });
     try {
-      await this.getTransporter().sendMail({
+      const transporter = await this.createTransporter();
+      await transporter.sendMail({
         from: smtp.from,
         to,
         subject: 'Đặt lại mật khẩu MPClub SSO',
