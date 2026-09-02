@@ -21,6 +21,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         login: resolve(__dirname, 'login.html'),
         'oidc-login': resolve(__dirname, 'oidc-login.html'),
+        profile: resolve(__dirname, 'profile.html'),
       },
       output: {
         manualChunks(id) {
@@ -42,6 +43,8 @@ export default defineConfig({
       '/authorize': BACKEND_URL,
       '/login': BACKEND_URL,
       '/token': BACKEND_URL,
+      '/profile': BACKEND_URL,
+      '/connect': BACKEND_URL,
     },
   },
 });

@@ -16,7 +16,8 @@ export interface User {
   googleId: string | null;
   webRole: WebRole;
   isDisabled: boolean;
-  
+  isProfileLocked?: boolean;
+
   // Profile fields (merged from Member)
   firstName?: string | null;
   middleName?: string | null;
@@ -29,6 +30,12 @@ export interface User {
   phone?: string | null;
   avatar?: string | null;
   bio?: string | null;
+
+  // Discord account link
+  discordId?: string | null;
+  discordUsername?: string | null;
+  discordAvatar?: string | null;
+  discordLinkedAt?: string | null;
 
   createdAt: string;
   updatedAt: string;
