@@ -25,6 +25,7 @@ export interface UpdateUserPayload {
   email?: string | null;
   webRole?: WebRole;
   isDisabled?: boolean;
+  isProfileLocked?: boolean;
   password?: string;
 
   firstName?: string;
