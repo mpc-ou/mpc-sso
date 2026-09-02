@@ -1,14 +1,12 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import {
-  type AccessTokenData,
-  BearerAuthGuard,
-} from '../common/guards/bearer-auth.guard';
+import type { AccessTokenData } from '../common/guards/bearer-auth.guard';
+import { SelfAuthGuard } from '../auth/guards/self-auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './profile.service';
 
 @Controller('profile')
-@UseGuards(BearerAuthGuard)
+@UseGuards(SelfAuthGuard)
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 

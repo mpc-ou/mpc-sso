@@ -23,6 +23,10 @@ export class UpdateUserDto {
   isDisabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isProfileLocked?: boolean;
+
+  @IsOptional()
   @IsString()
   password?: string;
 

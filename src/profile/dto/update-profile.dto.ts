@@ -19,7 +19,15 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
+  className?: string;
+
+  @IsOptional()
+  @IsString()
   mssv?: string;
+
+  @IsOptional()
+  @IsString()
+  faculty?: string;
 
   @IsOptional()
   @IsString()

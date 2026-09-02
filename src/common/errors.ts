@@ -32,6 +32,15 @@ type ErrorCode =
   // bearer guard
   | 'missing_bearer_token'
   | 'token_not_found_or_expired'
+  // self-login (BFF flow)
+  | 'self_login_expired'
+  // profile
+  | 'profile_locked'
+  | 'profile_field_immutable'
+  // discord linking
+  | 'discord_not_configured'
+  | 'discord_already_linked'
+  | 'discord_state_mismatch'
   // internal
   | 'internal_server_error';
 
@@ -157,6 +166,39 @@ const messages: Record<ErrorCode, { error: string; vi: string; en: string }> = {
     error: 'invalid_token',
     vi: 'Token không tìm thấy hoặc đã hết hạn',
     en: 'Token not found or expired',
+  },
+  // self-login (BFF flow)
+  self_login_expired: {
+    error: 'invalid_request',
+    vi: 'Phiên đăng nhập đã hết hạn, vui lòng thử lại từ đầu.',
+    en: 'Login session has expired, please try again from the beginning.',
+  },
+  // profile
+  profile_locked: {
+    error: 'profile_locked',
+    vi: 'Hồ sơ của bạn đã bị quản trị viên khoá chỉnh sửa.',
+    en: 'An administrator has locked your profile from editing.',
+  },
+  profile_field_immutable: {
+    error: 'profile_field_immutable',
+    vi: 'Trường thông tin này đã được điền và không thể để trống.',
+    en: 'This field has already been set and cannot be cleared.',
+  },
+  // discord linking
+  discord_not_configured: {
+    error: 'discord_not_configured',
+    vi: 'Liên kết Discord chưa được cấu hình.',
+    en: 'Discord linking is not configured.',
+  },
+  discord_already_linked: {
+    error: 'discord_already_linked',
+    vi: 'Tài khoản Discord này đã được liên kết với người dùng khác.',
+    en: 'This Discord account is already linked to a different user.',
+  },
+  discord_state_mismatch: {
+    error: 'discord_state_mismatch',
+    vi: 'Yêu cầu liên kết Discord không hợp lệ, vui lòng thử lại.',
+    en: 'Invalid Discord link request, please try again.',
   },
   internal_server_error: {
     error: 'server_error',

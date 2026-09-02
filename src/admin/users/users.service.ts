@@ -149,6 +149,7 @@ export class UsersService {
         email: dto.email,
         webRole: dto.webRole,
         isDisabled: dto.isDisabled,
+        isProfileLocked: dto.isProfileLocked,
         password: dto.password ? await hashPassword(dto.password) : undefined,
         firstName: dto.firstName,
         middleName: dto.middleName,

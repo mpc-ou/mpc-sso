@@ -34,7 +34,33 @@ async function main() {
     });
   }
 
-  console.log('Seed completed: admin user (admin / 1234) + 4 departments.');
+  const selfClientId = process.env.SELF_CLIENT_ID;
+  const selfClientSecret = process.env.SELF_CLIENT_SECRET;
+  if (!selfClientId || !selfClientSecret) {
+    throw new Error(
+      'Missing SELF_CLIENT_ID or SELF_CLIENT_SECRET — required to seed the self-service profile client.',
+    );
+  }
+  const issuer = process.env.ISSUER ?? 'http://localhost:3000';
+
+  await prisma.client.upsert({
+    where: { clientId: selfClientId },
+    update: {
+      redirectUris: JSON.stringify([`${issuer}/login/self/callback`]),
+    },
+    create: {
+      clientId: selfClientId,
+      clientSecretHash: await argon2.hash(selfClientSecret),
+      name: 'Hồ sơ MPC SSO',
+      redirectUris: JSON.stringify([`${issuer}/login/self/callback`]),
+      allowedScopes: 'openid profile email',
+      createdBy: 'system',
+    },
+  });
+
+  console.log(
+    'Seed completed: admin user (admin / 1234), 4 departments, self-service client.',
+  );
 }
 
 main()

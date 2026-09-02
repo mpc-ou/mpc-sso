@@ -3,21 +3,105 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { PendingAuthorization, User } from '@prisma/client';
 import { bilingual } from '../common/errors';
-import { generateToken } from '../lib/crypto';
+import type { AppConfig } from '../config/config';
+import { base64urlSha256, generateToken, sha256Hex } from '../lib/crypto';
 import { dummyVerify, verifyPassword } from '../lib/password';
 import { PrismaService } from '../prisma/prisma.service';
+import { TokenService } from '../token/token.service';
 import type { AuthorizeQueryDto } from './dto/authorize.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { GoogleProfile } from './strategies/google.strategy';
 
 const PENDING_AUTH_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const AUTH_CODE_TTL_MS = 60 * 1000; // 60 seconds
+const USER_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days, matches AdminSession
+
+export const SELF_LOGIN_REDIRECT_PATH = '/login/self/callback';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService<AppConfig, true>,
+    private readonly tokenService: TokenService,
+  ) {}
+
+  private selfRedirectUri(): string {
+    const issuer = this.configService.get('issuer', { infer: true });
+    return `${issuer}${SELF_LOGIN_REDIRECT_PATH}`;
+  }
+
+  /** Starts the default (no client_id) login flow: bootstraps a PendingAuthorization against the first-party self client. */
+  async initiateSelfLogin(): Promise<{
+    requestId: string;
+    pkceVerifier: string;
+  }> {
+    const selfClient = this.configService.get('selfClient', { infer: true });
+    const pkceVerifier = generateToken();
+
+    const { requestId } = await this.authorize({
+      response_type: 'code',
+      client_id: selfClient.clientId,
+      redirect_uri: this.selfRedirectUri(),
+      scope: 'openid profile email',
+      state: generateToken(),
+      code_challenge: base64urlSha256(pkceVerifier),
+      code_challenge_method: 'S256',
+    });
+
+    return { requestId, pkceVerifier };
+  }
+
+  /**
+   * Finishes the default login flow: exchanges the code server-side (the browser never
+   * sees the self client's secret) and opens a UserSession for the `sso_session` cookie.
+   */
+  async completeSelfLogin(
+    code: string,
+    pkceVerifier: string,
+    ip: string | undefined,
+    userAgent: string | undefined,
+  ): Promise<{ sessionId: string; expiresAt: Date }> {
+    const selfClient = this.configService.get('selfClient', { infer: true });
+
+    const tokenResponse = await this.tokenService.exchange({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: this.selfRedirectUri(),
+      client_id: selfClient.clientId,
+      client_secret: selfClient.clientSecret,
+      code_verifier: pkceVerifier,
+    });
+
+    const accessTokenRecord = await this.prisma.accessToken.findUnique({
+      where: { tokenHash: sha256Hex(tokenResponse.access_token) },
+    });
+    if (!accessTokenRecord) {
+      throw new UnauthorizedException(bilingual('self_login_expired'));
+    }
+
+    const sessionId = generateToken();
+    const expiresAt = new Date(Date.now() + USER_SESSION_TTL_MS);
+
+    await this.prisma.userSession.create({
+      data: {
+        sessionId,
+        userId: accessTokenRecord.userId,
+        ip,
+        userAgent,
+        expiresAt,
+      },
+    });
+
+    return { sessionId, expiresAt };
+  }
+
+  async logoutSelfSession(sessionId: string): Promise<void> {
+    await this.prisma.userSession.deleteMany({ where: { sessionId } });
+  }
 
   async authorize(query: AuthorizeQueryDto): Promise<{ requestId: string }> {
     if (!query.scope.split(' ').includes('openid')) {

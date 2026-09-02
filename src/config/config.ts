@@ -12,6 +12,15 @@ export interface AppConfig {
     clientSecret: string;
     callbackUrl: string;
   };
+  selfClient: {
+    clientId: string;
+    clientSecret: string;
+  };
+  discord: {
+    clientId: string;
+    clientSecret: string;
+    callbackUrl: string;
+  };
   resend: {
     apiKey: string;
     from: string;
@@ -40,6 +49,15 @@ export function configuration(): AppConfig {
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
       callbackUrl: process.env.GOOGLE_CALLBACK_URL ?? '',
+    },
+    selfClient: {
+      clientId: requireEnv('SELF_CLIENT_ID'),
+      clientSecret: requireEnv('SELF_CLIENT_SECRET'),
+    },
+    discord: {
+      clientId: process.env.DISCORD_CLIENT_ID ?? '',
+      clientSecret: process.env.DISCORD_CLIENT_SECRET ?? '',
+      callbackUrl: process.env.DISCORD_CALLBACK_URL ?? '',
     },
     resend: {
       apiKey: process.env.RESEND_API_KEY ?? '',
