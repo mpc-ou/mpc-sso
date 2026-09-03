@@ -51,6 +51,11 @@
     "missingRequestId": "Missing request_id, please try logging in again from the application.",
     "sessionExpired": "Login session has expired, please try again from the beginning."
   },
+  "errorPage": {
+    "title": "Something went wrong",
+    "fallback": "Something's not right, please try again.",
+    "home": "Back to home"
+  },
   "profile": {
     "loading": "Loading...",
     "topBar": {

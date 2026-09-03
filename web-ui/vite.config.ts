@@ -31,6 +31,7 @@ export default defineConfig({
         login: resolve(__dirname, 'login.html'),
         'oidc-login': resolve(__dirname, 'oidc-login.html'),
         profile: resolve(__dirname, 'profile.html'),
+        error: resolve(__dirname, 'error.html'),
       },
       output: {
         manualChunks(id) {

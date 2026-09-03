@@ -51,6 +51,11 @@
     "missingRequestId": "Thiếu request_id, vui lòng thử đăng nhập lại từ ứng dụng.",
     "sessionExpired": "Phiên đăng nhập đã hết hạn, vui lòng thử lại từ đầu."
   },
+  "errorPage": {
+    "title": "Đã có lỗi xảy ra",
+    "fallback": "Có gì đó không ổn, vui lòng thử lại.",
+    "home": "Về trang chủ"
+  },
   "profile": {
     "loading": "Đang tải...",
     "topBar": {
