@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Department } from '@prisma/client';
 import type { PaginationDto } from '../../common/dto/pagination.dto';
 import { EventsService } from '../../events/events.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -37,8 +38,9 @@ export class ClubRolesService {
     });
     if (!user) throw new NotFoundException('User not found');
 
+    let department: Department | null = null;
     if (dto.departmentId) {
-      const department = await this.prisma.department.findUnique({
+      department = await this.prisma.department.findUnique({
         where: { id: dto.departmentId },
       });
       if (!department) throw new NotFoundException('Department not found');
@@ -46,11 +48,26 @@ export class ClubRolesService {
 
     const clubRole = await this.prisma.clubRole.create({ data: dto });
 
+    // Audit-only: precise record of the club-role entity itself.
     await this.events.record({
       event: 'club-role.created',
       actorId,
       targetId: clubRole.id,
       targetLabel: `${dto.position} · ${user.username}`,
+      ip,
+    });
+    // Public/webhook-facing: a club role is "member info" — notifies webhooks
+    // subscribed to member.changed (e.g. a Discord bot syncing roles).
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      targetId: user.id,
+      targetLabel: user.username,
+      extra: {
+        action: 'role-added',
+        position: dto.position,
+        department: department?.name,
+      },
       ip,
     });
 
@@ -65,12 +82,13 @@ export class ClubRolesService {
   ) {
     const clubRole = await this.prisma.clubRole.findUnique({
       where: { id },
-      include: { user: true },
+      include: { user: true, department: true },
     });
     if (!clubRole) throw new NotFoundException('Club role not found');
 
+    let department: Department | null = clubRole.department;
     if (dto.departmentId) {
-      const department = await this.prisma.department.findUnique({
+      department = await this.prisma.department.findUnique({
         where: { id: dto.departmentId },
       });
       if (!department) throw new NotFoundException('Department not found');
@@ -93,6 +111,18 @@ export class ClubRolesService {
       changedFields,
       ip,
     });
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      targetId: clubRole.userId,
+      targetLabel: clubRole.user.username,
+      extra: {
+        action: 'role-updated',
+        position: updated.position,
+        department: department?.name,
+      },
+      ip,
+    });
 
     return updated;
   }
@@ -100,7 +130,7 @@ export class ClubRolesService {
   async remove(id: string, actorId?: string, ip?: string) {
     const clubRole = await this.prisma.clubRole.findUnique({
       where: { id },
-      include: { user: true },
+      include: { user: true, department: true },
     });
     if (!clubRole) throw new NotFoundException('Club role not found');
 
@@ -111,6 +141,18 @@ export class ClubRolesService {
       actorId,
       targetId: id,
       targetLabel: `${clubRole.position} · ${clubRole.user.username}`,
+      ip,
+    });
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      targetId: clubRole.userId,
+      targetLabel: clubRole.user.username,
+      extra: {
+        action: 'role-removed',
+        position: clubRole.position,
+        department: clubRole.department?.name,
+      },
       ip,
     });
 

@@ -24,12 +24,25 @@ const MEMBER_ACTION_PRESET: Record<string, { title: string; color: number }> = {
     title: '🔓 Đã mở khoá hồ sơ của toàn bộ thành viên',
     color: 0x2ecc71,
   },
+  'role-added': { title: '🎖️ Thêm chức vụ CLB', color: 0x2ecc71 },
+  'role-updated': { title: '🎖️ Cập nhật chức vụ CLB', color: 0x3498db },
+  'role-removed': { title: '🎖️ Xoá chức vụ CLB', color: 0xe74c3c },
 };
 
 const METHOD_LABEL: Record<string, string> = {
   password: 'Mật khẩu',
   google: 'Google',
   admin: 'Trang quản trị',
+};
+
+const POSITION_LABEL: Record<string, string> = {
+  PRESIDENT: 'Chủ nhiệm',
+  VICE_PRESIDENT: 'Phó chủ nhiệm',
+  DEPARTMENT_LEADER: 'Trưởng ban',
+  DEPARTMENT_VICE_LEADER: 'Phó ban',
+  DEPARTMENT_MEMBER: 'Thành viên ban',
+  COLLABORATOR: 'Cộng tác viên',
+  ADVISOR: 'Cố vấn',
 };
 
 export interface DiscordEmbedInput {
@@ -107,6 +120,16 @@ export function buildDiscordEmbed(input: DiscordEmbedInput): string {
         value: String(input.extra.count),
         inline: true,
       });
+    }
+    if (typeof input.extra?.position === 'string') {
+      fields.push({
+        name: 'Chức vụ',
+        value: POSITION_LABEL[input.extra.position] ?? input.extra.position,
+        inline: true,
+      });
+    }
+    if (typeof input.extra?.department === 'string') {
+      fields.push({ name: 'Ban', value: input.extra.department, inline: true });
     }
   }
 
