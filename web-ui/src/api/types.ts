@@ -81,6 +81,62 @@ export interface ClientWithSecret extends Client {
   clientSecret: string;
 }
 
+export type WebhookEvent = 'profile.updated' | 'member.changed' | 'auth.login';
+
+export interface WebhookDelivery {
+  id: string;
+  webhookId: string;
+  event: string;
+  statusCode: number | null;
+  ok: boolean;
+  error: string | null;
+  durationMs: number;
+  createdAt: string;
+}
+
+export interface Webhook {
+  id: string;
+  event: string;
+  url: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  lastDelivery: WebhookDelivery | null;
+}
+
+export interface WebhookWithSecret extends Webhook {
+  secret: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  event: string;
+  actorId: string | null;
+  actorLabel: string | null;
+  targetId: string | null;
+  targetLabel: string | null;
+  changedFields: string[];
+  ip: string | null;
+  createdAt: string;
+}
+
+export interface RecentLogin {
+  id: string;
+  username: string;
+  avatar: string | null;
+  method: string;
+  ip: string | null;
+  createdAt: string;
+}
+
+export interface DashboardStats {
+  totalLogins: number;
+  loginsToday: number;
+  activeNow: number;
+  recentLogins: RecentLogin[];
+}
+
 export interface Paginated<T> {
   items: T[];
   total: number;

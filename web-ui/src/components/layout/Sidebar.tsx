@@ -2,7 +2,9 @@ import {
   Building2,
   KeySquare,
   LayoutDashboard,
+  ScrollText,
   Users,
+  Webhook,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -12,6 +14,8 @@ const navItems = [
   { to: '/users', label: 'Users/Members', icon: Users },
   { to: '/departments', label: 'Departments', icon: Building2 },
   { to: '/clients', label: 'Clients', icon: KeySquare },
+  { to: '/webhooks', label: 'Webhooks', icon: Webhook },
+  { to: '/audit-log', label: 'Nhật ký hoạt động', icon: ScrollText },
 ];
 
 export function Sidebar() {
