@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { z } from 'zod';
-import { ArrowLeft, User, KeyRound, GraduationCap, Eye, Loader2, Upload } from 'lucide-react';
+import { ArrowLeft, User, KeyRound, GraduationCap, Eye, Loader2, Upload, Link2 } from 'lucide-react';
 import { ApiError } from '@/api/client';
 import { usersApi } from '@/api/users';
 import { SimpleSelect } from '@/components/SimpleSelect';
@@ -36,6 +36,8 @@ const schema = z.object({
   phone: z.string().optional(),
   avatar: z.string().optional(),
   bio: z.string().optional(),
+  discordId: z.string().optional(),
+  discordUsername: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -79,6 +81,8 @@ export function UserEditPage() {
       phone: '',
       avatar: '',
       bio: '',
+      discordId: '',
+      discordUsername: '',
     },
   });
 
@@ -117,6 +121,8 @@ export function UserEditPage() {
         phone: user.phone ?? '',
         avatar: user.avatar ?? '',
         bio: user.bio ?? '',
+        discordId: user.discordId ?? '',
+        discordUsername: user.discordUsername ?? '',
       });
     }
   }, [user, reset]);
@@ -139,6 +145,8 @@ export function UserEditPage() {
         phone: values.phone || null,
         avatar: values.avatar || null,
         bio: values.bio || null,
+        discordId: values.discordId || null,
+        discordUsername: values.discordUsername || null,
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -315,6 +323,29 @@ export function UserEditPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Section 2.5: Discord link */}
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center gap-2 border-b border-slate-100 pb-3">
+            <Link2 className="h-4 w-4 text-brand-600" />
+            <CardTitle className="text-base font-semibold">Liên kết Discord</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-4">
+            <p className="text-xs text-slate-500">
+              Người dùng thường tự liên kết Discord ở trang hồ sơ. Chỉ điền tay ở đây nếu cần gán/sửa thủ công.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="discordId" className="text-xs font-semibold uppercase tracking-wider text-slate-500">Discord ID</Label>
+                <Input id="discordId" placeholder="732157441889927239" {...register('discordId')} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="discordUsername" className="text-xs font-semibold uppercase tracking-wider text-slate-500">Discord Username</Label>
+                <Input id="discordUsername" placeholder="username" {...register('discordUsername')} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Section 3: Academic & Bio */}
         <Card className="shadow-sm">

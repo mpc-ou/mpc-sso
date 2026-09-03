@@ -74,4 +74,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   bio?: string | null;
+
+  @IsOptional()
+  @IsString()
+  discordId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  discordUsername?: string | null;
 }

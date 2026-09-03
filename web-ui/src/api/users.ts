@@ -39,6 +39,8 @@ export interface UpdateUserPayload {
   phone?: string | null;
   avatar?: string | null;
   bio?: string | null;
+  discordId?: string | null;
+  discordUsername?: string | null;
 }
 
 export const usersApi = {

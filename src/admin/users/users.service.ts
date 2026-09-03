@@ -3,7 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type User } from '@prisma/client';
+import { bilingual } from '../../common/errors';
 import { EventsService } from '../../events/events.service';
 import { hashPassword } from '../../lib/password';
 import { stripPassword } from '../../lib/user-claims';
@@ -171,27 +172,47 @@ export class UsersService {
         throw new ConflictException('Email already registered');
     }
 
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data: {
-        email: dto.email,
-        webRole: dto.webRole,
-        isDisabled: dto.isDisabled,
-        isProfileLocked: dto.isProfileLocked,
-        password: dto.password ? await hashPassword(dto.password) : undefined,
-        firstName: dto.firstName,
-        middleName: dto.middleName,
-        lastName: dto.lastName,
-        dob: dto.dob,
-        address: dto.address,
-        className: dto.className,
-        mssv: dto.mssv,
-        faculty: dto.faculty,
-        phone: dto.phone,
-        avatar: dto.avatar,
-        bio: dto.bio,
-      },
-    });
+    let updated: User;
+    try {
+      updated = await this.prisma.user.update({
+        where: { id },
+        data: {
+          email: dto.email,
+          webRole: dto.webRole,
+          isDisabled: dto.isDisabled,
+          isProfileLocked: dto.isProfileLocked,
+          password: dto.password ? await hashPassword(dto.password) : undefined,
+          firstName: dto.firstName,
+          middleName: dto.middleName,
+          lastName: dto.lastName,
+          dob: dto.dob,
+          address: dto.address,
+          className: dto.className,
+          mssv: dto.mssv,
+          faculty: dto.faculty,
+          phone: dto.phone,
+          avatar: dto.avatar,
+          bio: dto.bio,
+          discordId: dto.discordId,
+          discordUsername: dto.discordUsername,
+          discordLinkedAt:
+            dto.discordId !== undefined
+              ? dto.discordId
+                ? new Date()
+                : null
+              : undefined,
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002' &&
+        (err.meta?.target as string[] | undefined)?.includes('discordId')
+      ) {
+        throw new ConflictException(bilingual('discord_already_linked'));
+      }
+      throw err;
+    }
 
     const changedFields = Object.entries(dto)
       .filter(([, value]) => value !== undefined)
