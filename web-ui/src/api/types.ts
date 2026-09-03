@@ -81,7 +81,7 @@ export interface ClientWithSecret extends Client {
   clientSecret: string;
 }
 
-export type WebhookEvent = 'profile.updated' | 'member.changed' | 'auth.login';
+export type WebhookEvent = 'member.changed' | 'auth.login';
 
 export interface WebhookDelivery {
   id: string;
@@ -96,7 +96,7 @@ export interface WebhookDelivery {
 
 export interface Webhook {
   id: string;
-  event: string;
+  events: string[];
   url: string;
   isActive: boolean;
   createdBy: string;

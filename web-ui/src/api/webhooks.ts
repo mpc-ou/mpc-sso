@@ -2,13 +2,14 @@ import { api } from './client';
 import type { Webhook, WebhookDelivery, WebhookEvent, WebhookWithSecret } from './types';
 
 export interface CreateWebhookPayload {
-  event: WebhookEvent;
+  events: WebhookEvent[];
   url: string;
 }
 
 export interface UpdateWebhookPayload {
   url?: string;
   isActive?: boolean;
+  events?: WebhookEvent[];
 }
 
 export const webhooksApi = {

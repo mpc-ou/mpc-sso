@@ -20,7 +20,6 @@ const PAGE_SIZE = 30;
 
 const EVENT_OPTIONS = [
   { value: '', label: 'Tất cả sự kiện' },
-  { value: 'profile.updated', label: 'Thông tin hồ sơ thay đổi' },
   { value: 'member.changed', label: 'Thành viên thay đổi' },
   { value: 'auth.login', label: 'Đăng nhập' },
   { value: 'client.created', label: 'Tạo OAuth client' },
@@ -38,7 +37,6 @@ const EVENT_OPTIONS = [
 ];
 
 const EVENT_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
-  'profile.updated': 'default',
   'member.changed': 'secondary',
   'auth.login': 'outline',
 };
@@ -47,6 +45,8 @@ const ACTION_LABELS: Record<string, string> = {
   created: 'Tạo mới',
   updated: 'Cập nhật',
   deleted: 'Xoá',
+  locked: 'Khoá hồ sơ',
+  unlocked: 'Mở khoá hồ sơ',
   'locked-all': 'Khoá toàn bộ',
   'unlocked-all': 'Mở khoá toàn bộ',
 };

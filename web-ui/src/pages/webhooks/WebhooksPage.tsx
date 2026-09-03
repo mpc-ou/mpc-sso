@@ -8,7 +8,6 @@ import { ApiError } from '@/api/client';
 import { webhooksApi } from '@/api/webhooks';
 import type { Webhook, WebhookEvent, WebhookWithSecret } from '@/api/types';
 import { SimpleDialog as Dialog } from '@/components/SimpleDialog';
-import { SimpleSelect } from '@/components/SimpleSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,15 +23,11 @@ import {
 } from '@/components/ui/table';
 
 const EVENT_LABELS: Record<WebhookEvent, string> = {
-  'profile.updated': 'Thông tin hồ sơ thay đổi',
   'member.changed': 'Thành viên được thêm / sửa / xoá',
   'auth.login': 'Có người đăng nhập',
 };
 
-const EVENT_OPTIONS = (Object.keys(EVENT_LABELS) as WebhookEvent[]).map((value) => ({
-  value,
-  label: EVENT_LABELS[value],
-}));
+const EVENT_OPTIONS = Object.keys(EVENT_LABELS) as WebhookEvent[];
 
 function TipsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -97,7 +92,7 @@ function TipsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 const createSchema = z.object({
-  event: z.enum(['profile.updated', 'member.changed', 'auth.login']),
+  events: z.array(z.enum(['member.changed', 'auth.login'])).min(1, 'Chọn ít nhất một sự kiện'),
   url: z.string().url('URL không hợp lệ').startsWith('https://', 'URL phải bắt đầu bằng https://'),
 });
 type CreateFormValues = z.infer<typeof createSchema>;
@@ -121,7 +116,7 @@ function CreateWebhookDialog({
   } = useForm<CreateFormValues>({ resolver: zodResolver(createSchema) });
 
   useEffect(() => {
-    if (open) reset({ event: 'profile.updated', url: '' });
+    if (open) reset({ events: ['member.changed'], url: '' });
   }, [open, reset]);
 
   const mutation = useMutation({
@@ -144,11 +139,34 @@ function CreateWebhookDialog({
           <Label>Sự kiện</Label>
           <Controller
             control={control}
-            name="event"
+            name="events"
             render={({ field }) => (
-              <SimpleSelect value={field.value} onValueChange={field.onChange} options={EVENT_OPTIONS} />
+              <div className="mt-1 space-y-2">
+                {EVENT_OPTIONS.map((value) => (
+                  <label
+                    key={value}
+                    className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={field.value?.includes(value) ?? false}
+                      onChange={(e) => {
+                        const current = field.value ?? [];
+                        field.onChange(
+                          e.target.checked
+                            ? [...current, value]
+                            : current.filter((v) => v !== value),
+                        );
+                      }}
+                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    {EVENT_LABELS[value]}
+                  </label>
+                ))}
+              </div>
             )}
           />
+          {errors.events && <p className="mt-1 text-xs text-red-600">{errors.events.message}</p>}
         </div>
         <div>
           <Label htmlFor="url">URL nhận webhook</Label>
@@ -279,9 +297,13 @@ export function WebhooksPage() {
               {(data ?? []).map((webhook) => (
                 <TableRow key={webhook.id} className="hover:bg-slate-50/50">
                   <TableCell>
-                    <div className="flex items-center gap-2 font-medium text-slate-900">
-                      <WebhookIcon className="h-3.5 w-3.5 text-brand-600" />
-                      {EVENT_LABELS[webhook.event as WebhookEvent] ?? webhook.event}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <WebhookIcon className="h-3.5 w-3.5 shrink-0 text-brand-600" />
+                      {webhook.events.map((event) => (
+                        <Badge key={event} variant="outline" className="font-normal">
+                          {EVENT_LABELS[event as WebhookEvent] ?? event}
+                        </Badge>
+                      ))}
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs truncate font-mono text-xs text-slate-600">
