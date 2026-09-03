@@ -96,7 +96,7 @@ model LoginEvent {
 
 model Webhook {
   id         String   @id @default(cuid())
-  event      String // "profile.updated" | "member.changed" | "auth.login"
+  events     String[] // subset of "member.changed" | "auth.login"
   url        String
   secretEnc  String // AES-256-GCM encrypted (must be reversible to sign future deliveries — unlike Client.clientSecretHash)
   isActive   Boolean  @default(true)
@@ -107,7 +107,7 @@ model Webhook {
 
   deliveries WebhookDelivery[]
 
-  @@index([event])
+  @@index([events])
   @@map("webhooks")
 }
 

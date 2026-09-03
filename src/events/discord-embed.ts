@@ -87,31 +87,23 @@ export function buildDiscordEmbed(input: DiscordEmbedInput): string {
         inline: true,
       });
     if (input.ip) fields.push({ name: 'IP', value: input.ip, inline: true });
-  } else if (input.event === 'profile.updated') {
-    title = '📝 Hồ sơ được cập nhật';
-    color = 0x3498db;
-    fields.push({
-      name: 'Người dùng',
-      value: mention(input.targetDiscordId, input.targetLabel),
-      inline: true,
-    });
-    if (input.changedFields?.length) {
-      fields.push({
-        name: 'Trường thay đổi',
-        value: input.changedFields.join(', '),
-      });
-    }
   } else if (input.event === 'member.changed') {
     const action =
       typeof input.extra?.action === 'string' ? input.extra.action : undefined;
     const preset = action ? MEMBER_ACTION_PRESET[action] : undefined;
-    title = preset?.title ?? '👥 Thành viên thay đổi';
+    title = preset?.title ?? '👥 Thông tin người dùng thay đổi';
     color = preset?.color ?? color;
     if (input.targetLabel) {
       fields.push({
-        name: 'Thành viên',
+        name: 'Người dùng',
         value: mention(input.targetDiscordId, input.targetLabel),
         inline: true,
+      });
+    }
+    if (input.changedFields?.length) {
+      fields.push({
+        name: 'Trường thay đổi',
+        value: input.changedFields.join(', '),
       });
     }
     if (typeof input.extra?.count === 'number') {

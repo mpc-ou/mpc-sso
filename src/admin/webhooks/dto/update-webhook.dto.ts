@@ -1,4 +1,12 @@
-import { IsBoolean, IsOptional, IsUrl } from 'class-validator';
+import {
+  ArrayMinSize,
+  ArrayUnique,
+  IsBoolean,
+  IsIn,
+  IsOptional,
+  IsUrl,
+} from 'class-validator';
+import { PUBLIC_EVENTS } from '../../../events/events.service';
 
 export class UpdateWebhookDto {
   @IsOptional()
@@ -8,4 +16,10 @@ export class UpdateWebhookDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsIn(PUBLIC_EVENTS, { each: true })
+  events?: string[];
 }

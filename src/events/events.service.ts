@@ -15,11 +15,7 @@ interface EventUser {
   discordUsername: string | null;
 }
 
-export const PUBLIC_EVENTS = [
-  'profile.updated',
-  'member.changed',
-  'auth.login',
-] as const;
+export const PUBLIC_EVENTS = ['member.changed', 'auth.login'] as const;
 export type PublicEvent = (typeof PUBLIC_EVENTS)[number];
 
 export interface RecordEventInput {
@@ -111,7 +107,7 @@ export class EventsService {
       if (!isPublicEvent(input.event)) return;
 
       const webhooks = await this.prisma.webhook.findMany({
-        where: { event: input.event, isActive: true },
+        where: { events: { has: input.event }, isActive: true },
       });
       if (webhooks.length === 0) return;
 

@@ -73,12 +73,13 @@ export class ProfileService {
       .map(([key]) => key);
 
     await this.events.record({
-      event: 'profile.updated',
+      event: 'member.changed',
       actorId: userId,
       actorLabel: user.username,
       targetId: userId,
       targetLabel: user.username,
       changedFields,
+      extra: { action: 'updated' },
       ip,
     });
 

@@ -42,7 +42,7 @@ export class WebhooksService {
 
     const webhook = await this.prisma.webhook.create({
       data: {
-        event: dto.event,
+        events: dto.events,
         url: dto.url,
         secretEnc,
         createdBy: actorId ?? 'system',
@@ -69,7 +69,7 @@ export class WebhooksService {
 
     const updated = await this.prisma.webhook.update({
       where: { id },
-      data: { url: dto.url, isActive: dto.isActive },
+      data: { url: dto.url, isActive: dto.isActive, events: dto.events },
     });
 
     await this.events.record({

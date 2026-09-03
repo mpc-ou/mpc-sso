@@ -198,16 +198,10 @@ export class UsersService {
       .map(([key]) => key);
 
     await this.events.record({
-      event: 'profile.updated',
-      actorId,
-      targetId: id,
-      changedFields,
-      ip,
-    });
-    await this.events.record({
       event: 'member.changed',
       actorId,
       targetId: id,
+      changedFields,
       extra: { action: 'updated' },
       ip,
     });
