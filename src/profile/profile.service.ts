@@ -28,6 +28,12 @@ export class ProfileService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        clubRoles: {
+          include: { department: true },
+          orderBy: { startAt: 'desc' },
+        },
+      },
     });
     if (!user) throw new NotFoundException('User not found');
     return stripPassword(user);

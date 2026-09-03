@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Award,
   Building2,
   Cake,
   Camera,
@@ -29,7 +30,7 @@ import { z } from 'zod';
 import { authApi } from '@/api/auth';
 import { ApiError } from '@/api/client';
 import { discordApi, profileApi } from '@/api/profile';
-import type { User } from '@/api/types';
+import type { ClubPosition, User } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -617,6 +618,67 @@ function BioSection({ user }: { user: User }) {
   );
 }
 
+// ── Club roles section (read-only, admin-managed) ─────────────────
+
+function formatDate(value: string, locale: string): string {
+  return new Date(value).toLocaleDateString(locale.startsWith('en') ? 'en-US' : 'vi-VN');
+}
+
+function ClubRolesSection({ user }: { user: User }) {
+  const { t, i18n } = useTranslation();
+  const roles = user.clubRoles ?? [];
+
+  return (
+    <section id="club-roles" className="scroll-mt-32">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
+        <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <Award className="h-4.5 w-4.5" />
+          </div>
+          <div>
+            <h2 className="mpc-font-display text-[0.95rem] font-semibold tracking-tight text-slate-900">
+              {t('profile.clubRoles.title')}
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">{t('profile.clubRoles.description')}</p>
+          </div>
+        </div>
+        <div className="divide-y divide-slate-100 px-5">
+          {roles.length === 0 && (
+            <p className="py-4 text-sm text-slate-400">{t('profile.clubRoles.empty')}</p>
+          )}
+          {roles.map((role) => {
+            const isCurrent = !role.endAt || new Date(role.endAt) >= new Date();
+            return (
+              <div key={role.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-sm font-medium text-slate-800">
+                      {t(`profile.clubRoles.positions.${role.position}` as `profile.clubRoles.positions.${ClubPosition}`)}
+                    </span>
+                    {isCurrent && <Badge variant="success">{t('profile.clubRoles.current')}</Badge>}
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {role.department?.name ?? t('profile.clubRoles.noDepartment')}
+                    {role.term != null && ` · ${t('profile.clubRoles.cohort', { term: role.term })}`}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-slate-400">
+                  {role.endAt
+                    ? t('profile.clubRoles.period', {
+                        start: formatDate(role.startAt, i18n.language),
+                        end: formatDate(role.endAt, i18n.language),
+                      })
+                    : formatDate(role.startAt, i18n.language)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Linked accounts section ───────────────────────────────────────
 
 function LinkedAccountsSection({ user }: { user: User }) {
@@ -913,6 +975,7 @@ export function ProfilePage() {
         <div className="space-y-5">
           <PersonalSection user={user} />
           <StudentSection user={user} />
+          <ClubRolesSection user={user} />
           <ContactSection user={user} />
           <BioSection user={user} />
           <LinkedAccountsSection user={user} />

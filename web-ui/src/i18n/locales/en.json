@@ -112,6 +112,24 @@
       "empty": "No bio yet — tell us a bit about yourself.",
       "tooLong": "Max 280 characters"
     },
+    "clubRoles": {
+      "title": "Club roles",
+      "description": "Department & position set by an administrator — view only",
+      "empty": "You don't have any club role yet.",
+      "noDepartment": "No department",
+      "current": "Current",
+      "period": "{{start}} – {{end}}",
+      "cohort": "Cohort {{term}}",
+      "positions": {
+        "PRESIDENT": "President",
+        "VICE_PRESIDENT": "Vice President",
+        "DEPARTMENT_LEADER": "Department Leader",
+        "DEPARTMENT_VICE_LEADER": "Vice Leader",
+        "DEPARTMENT_MEMBER": "Department Member",
+        "COLLABORATOR": "Collaborator",
+        "ADVISOR": "Advisor"
+      }
+    },
     "linked": {
       "title": "Linked accounts",
       "description": "Quick sign-in and club bot integration",
