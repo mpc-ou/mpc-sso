@@ -37,6 +37,23 @@ function inferActionFromEvent(event: string): string | undefined {
     : undefined;
 }
 
+/**
+ * undici wraps the real network failure in `err.cause` (e.g. a bare "fetch
+ * failed" hides a ConnectTimeoutError/ETIMEDOUT underneath) — walk the cause
+ * chain so the delivery record is self-diagnosable without reproducing it.
+ */
+function formatDeliveryError(err: unknown): string {
+  if (!(err instanceof Error)) return 'Unknown delivery error';
+
+  const parts = [err.message];
+  let cause: unknown = err.cause;
+  for (let depth = 0; depth < 3 && cause instanceof Error; depth++) {
+    if (cause.message) parts.push(cause.message);
+    cause = cause.cause;
+  }
+  return parts.join(': ').slice(0, 300);
+}
+
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
@@ -155,7 +172,7 @@ export class EventsService {
       statusCode = res.status;
       ok = res.ok;
     } catch (err) {
-      error = err instanceof Error ? err.message : 'Unknown delivery error';
+      error = formatDeliveryError(err);
     }
 
     const durationMs = Date.now() - start;
