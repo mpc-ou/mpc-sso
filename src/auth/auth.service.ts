@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
+  OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,7 +11,7 @@ import { bilingual } from '../common/errors';
 import type { AppConfig } from '../config/config';
 import { EventsService } from '../events/events.service';
 import { base64urlSha256, generateToken, sha256Hex } from '../lib/crypto';
-import { dummyVerify, verifyPassword } from '../lib/password';
+import { dummyVerify, hashPassword, verifyPassword } from '../lib/password';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenService } from '../token/token.service';
 import type { AuthorizeQueryDto } from './dto/authorize.dto';
@@ -19,17 +21,52 @@ import type { GoogleProfile } from './strategies/google.strategy';
 const PENDING_AUTH_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const AUTH_CODE_TTL_MS = 60 * 1000; // 60 seconds
 const USER_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days, matches AdminSession
+const SELF_CLIENT_NAME = 'Hồ sơ MPC SSO';
 
 export const SELF_LOGIN_REDIRECT_PATH = '/login/self/callback';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService<AppConfig, true>,
     private readonly tokenService: TokenService,
     private readonly events: EventsService,
   ) {}
+
+  /**
+   * Deploys never run `prisma db seed` — without this, a fresh/production
+   * database has no "self" OAuth client and the default /login flow 400s
+   * with invalid_client. Upserting on every boot keeps it in sync with
+   * SELF_CLIENT_ID/SELF_CLIENT_SECRET/ISSUER without a manual seed step.
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      const selfClient = this.configService.get('selfClient', { infer: true });
+      const redirectUris = JSON.stringify([this.selfRedirectUri()]);
+      const clientSecretHash = await hashPassword(selfClient.clientSecret);
+
+      await this.prisma.client.upsert({
+        where: { clientId: selfClient.clientId },
+        update: { redirectUris, clientSecretHash, isActive: true },
+        create: {
+          clientId: selfClient.clientId,
+          clientSecretHash,
+          name: SELF_CLIENT_NAME,
+          redirectUris,
+          allowedScopes: 'openid profile email',
+          createdBy: 'system',
+        },
+      });
+    } catch (err) {
+      this.logger.error(
+        'Failed to bootstrap self-service client',
+        err as Error,
+      );
+    }
+  }
 
   private selfRedirectUri(): string {
     const issuer = this.configService.get('issuer', { infer: true });
