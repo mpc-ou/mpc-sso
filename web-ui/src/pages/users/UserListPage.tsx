@@ -108,7 +108,7 @@ export function UserListPage() {
 
   const bulkLockMutation = useMutation({
     mutationFn: ({ ids, isProfileLocked }: { ids: string[]; isProfileLocked: boolean }) =>
-      Promise.all(ids.map((id) => usersApi.update(id, { isProfileLocked }))),
+      usersApi.bulkLock(ids, isProfileLocked),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['users'] });
       setSelectedIds([]);

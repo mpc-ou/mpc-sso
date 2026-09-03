@@ -85,6 +85,20 @@ export class UsersController {
     );
   }
 
+  @Patch('bulk-lock')
+  bulkLock(
+    @Body('ids') ids: string[],
+    @Body('isProfileLocked') isProfileLocked: boolean,
+    @Req() req: Request,
+  ) {
+    return this.usersService.bulkSetProfileLockedForIds(
+      ids,
+      isProfileLocked,
+      actorIdFrom(req),
+      req.ip,
+    );
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,

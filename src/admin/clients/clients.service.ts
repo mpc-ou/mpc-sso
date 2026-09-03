@@ -124,15 +124,16 @@ export class ClientsService {
       where: { id: { in: ids } },
     });
 
-    for (const client of clients) {
-      await this.events.record({
-        event: 'client.deleted',
-        actorId,
-        targetId: client.id,
-        targetLabel: client.name,
-        ip,
-      });
-    }
+    await this.events.record({
+      event: 'client.deleted',
+      actorId,
+      extra: {
+        action: 'deleted',
+        count: clients.length,
+        names: clients.map((c) => c.name).slice(0, 20),
+      },
+      ip,
+    });
 
     return { count: ids.length };
   }

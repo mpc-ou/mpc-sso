@@ -69,6 +69,8 @@ export const usersApi = {
     api.delete<{ count: number }>('/admin/users/bulk', { ids }),
   lockAll: (isProfileLocked: boolean) =>
     api.patch<{ count: number }>('/admin/users/lock-all', { isProfileLocked }),
+  bulkLock: (ids: string[], isProfileLocked: boolean) =>
+    api.patch<{ count: number }>('/admin/users/bulk-lock', { ids, isProfileLocked }),
   uploadAvatar: (file: File, oldUrl?: string) => {
     const formData = new FormData();
     formData.append('file', file);

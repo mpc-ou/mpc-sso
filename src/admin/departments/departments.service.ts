@@ -115,15 +115,16 @@ export class DepartmentsService {
       where: { id: { in: ids } },
     });
 
-    for (const department of departments) {
-      await this.events.record({
-        event: 'department.deleted',
-        actorId,
-        targetId: department.id,
-        targetLabel: department.name,
-        ip,
-      });
-    }
+    await this.events.record({
+      event: 'department.deleted',
+      actorId,
+      extra: {
+        action: 'deleted',
+        count: departments.length,
+        names: departments.map((d) => d.name).slice(0, 20),
+      },
+      ip,
+    });
 
     return { count: ids.length };
   }

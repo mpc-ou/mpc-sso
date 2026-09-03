@@ -250,6 +250,7 @@ export class UsersService {
     return { count: result.count };
   }
 
+  /** One aggregated event for the whole batch — not one per user (a bulk action is one action, not N) */
   async bulkDelete(ids: string[], actorId?: string, ip?: string) {
     const users = await this.prisma.user.findMany({
       where: { id: { in: ids } },
@@ -260,17 +261,41 @@ export class UsersService {
       where: { id: { in: ids } },
     });
 
-    for (const user of users) {
-      await this.events.record({
-        event: 'member.changed',
-        actorId,
-        targetId: user.id,
-        targetLabel: user.username,
-        extra: { action: 'deleted' },
-        ip,
-      });
-    }
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      extra: {
+        action: 'deleted',
+        count: users.length,
+        usernames: users.map((u) => u.username).slice(0, 20),
+      },
+      ip,
+    });
 
     return { count: ids.length };
+  }
+
+  async bulkSetProfileLockedForIds(
+    ids: string[],
+    isProfileLocked: boolean,
+    actorId?: string,
+    ip?: string,
+  ) {
+    const result = await this.prisma.user.updateMany({
+      where: { id: { in: ids } },
+      data: { isProfileLocked },
+    });
+
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      extra: {
+        action: isProfileLocked ? 'locked' : 'unlocked',
+        count: result.count,
+      },
+      ip,
+    });
+
+    return { count: result.count };
   }
 }
