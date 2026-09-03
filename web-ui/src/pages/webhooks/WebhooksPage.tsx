@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, HelpCircle, Trash2, Webhook as WebhookIcon } from 'lucide-react';
+import { Copy, HelpCircle, Pencil, Trash2, Webhook as WebhookIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -91,11 +91,44 @@ function TipsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-const createSchema = z.object({
+const webhookSchema = z.object({
   events: z.array(z.enum(['member.changed', 'auth.login'])).min(1, 'Chọn ít nhất một sự kiện'),
   url: z.string().url('URL không hợp lệ').startsWith('https://', 'URL phải bắt đầu bằng https://'),
 });
-type CreateFormValues = z.infer<typeof createSchema>;
+type WebhookFormValues = z.infer<typeof webhookSchema>;
+type CreateFormValues = WebhookFormValues;
+
+function EventCheckboxGroup({
+  value,
+  onChange,
+}: {
+  value: WebhookEvent[];
+  onChange: (next: WebhookEvent[]) => void;
+}) {
+  return (
+    <div className="mt-1 space-y-2">
+      {EVENT_OPTIONS.map((option) => (
+        <label
+          key={option}
+          className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
+        >
+          <input
+            type="checkbox"
+            checked={value?.includes(option) ?? false}
+            onChange={(e) => {
+              const current = value ?? [];
+              onChange(
+                e.target.checked ? [...current, option] : current.filter((v) => v !== option),
+              );
+            }}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          {EVENT_LABELS[option]}
+        </label>
+      ))}
+    </div>
+  );
+}
 
 function CreateWebhookDialog({
   open,
@@ -113,7 +146,7 @@ function CreateWebhookDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateFormValues>({ resolver: zodResolver(createSchema) });
+  } = useForm<CreateFormValues>({ resolver: zodResolver(webhookSchema) });
 
   useEffect(() => {
     if (open) reset({ events: ['member.changed'], url: '' });
@@ -140,31 +173,7 @@ function CreateWebhookDialog({
           <Controller
             control={control}
             name="events"
-            render={({ field }) => (
-              <div className="mt-1 space-y-2">
-                {EVENT_OPTIONS.map((value) => (
-                  <label
-                    key={value}
-                    className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={field.value?.includes(value) ?? false}
-                      onChange={(e) => {
-                        const current = field.value ?? [];
-                        field.onChange(
-                          e.target.checked
-                            ? [...current, value]
-                            : current.filter((v) => v !== value),
-                        );
-                      }}
-                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                    />
-                    {EVENT_LABELS[value]}
-                  </label>
-                ))}
-              </div>
-            )}
+            render={({ field }) => <EventCheckboxGroup value={field.value} onChange={field.onChange} />}
           />
           {errors.events && <p className="mt-1 text-xs text-red-600">{errors.events.message}</p>}
         </div>
@@ -175,6 +184,67 @@ function CreateWebhookDialog({
         </div>
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Đang tạo...' : 'Tạo webhook'}
+        </Button>
+      </form>
+    </Dialog>
+  );
+}
+
+function EditWebhookDialog({
+  webhook,
+  onClose,
+}: {
+  webhook: Webhook | null;
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<WebhookFormValues>({ resolver: zodResolver(webhookSchema) });
+
+  useEffect(() => {
+    if (webhook) reset({ events: webhook.events as WebhookEvent[], url: webhook.url });
+  }, [webhook, reset]);
+
+  const mutation = useMutation({
+    mutationFn: (values: WebhookFormValues) => {
+      if (!webhook) throw new Error('No webhook selected');
+      return webhooksApi.update(webhook.id, values);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['webhooks'] });
+      onClose();
+    },
+  });
+
+  return (
+    <Dialog open={Boolean(webhook)} onClose={onClose} title="Sửa webhook">
+      {mutation.isError && (
+        <div className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+          {mutation.error instanceof ApiError ? mutation.error.message : 'Cập nhật webhook thất bại'}
+        </div>
+      )}
+      <form onSubmit={handleSubmit((values) => mutation.mutate(values))} className="space-y-4">
+        <div>
+          <Label>Sự kiện</Label>
+          <Controller
+            control={control}
+            name="events"
+            render={({ field }) => <EventCheckboxGroup value={field.value} onChange={field.onChange} />}
+          />
+          {errors.events && <p className="mt-1 text-xs text-red-600">{errors.events.message}</p>}
+        </div>
+        <div>
+          <Label htmlFor="edit-url">URL nhận webhook</Label>
+          <Input id="edit-url" placeholder="https://example.com/webhooks/mpc" {...register('url')} />
+          {errors.url && <p className="mt-1 text-xs text-red-600">{errors.url.message}</p>}
+        </div>
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
         </Button>
       </form>
     </Dialog>
@@ -238,6 +308,7 @@ export function WebhooksPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [tipsOpen, setTipsOpen] = useState(false);
   const [revealWebhook, setRevealWebhook] = useState<WebhookWithSecret | null>(null);
+  const [editWebhook, setEditWebhook] = useState<Webhook | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ['webhooks'], queryFn: webhooksApi.list });
 
@@ -328,17 +399,26 @@ export function WebhooksPage() {
                     <DeliveryBadge webhook={webhook} />
                   </TableCell>
                   <TableCell className="text-right pr-4">
-                    <button
-                      className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      onClick={() => {
-                        if (confirm('Bạn chắc chắn muốn xoá webhook này?')) {
-                          deleteMutation.mutate(webhook.id);
-                        }
-                      }}
-                      title="Xoá webhook"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                        onClick={() => setEditWebhook(webhook)}
+                        title="Sửa webhook"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (confirm('Bạn chắc chắn muốn xoá webhook này?')) {
+                            deleteMutation.mutate(webhook.id);
+                          }
+                        }}
+                        title="Xoá webhook"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -364,6 +444,7 @@ export function WebhooksPage() {
         }}
       />
       <SecretRevealDialog webhook={revealWebhook} onClose={() => setRevealWebhook(null)} />
+      <EditWebhookDialog webhook={editWebhook} onClose={() => setEditWebhook(null)} />
     </div>
   );
 }
