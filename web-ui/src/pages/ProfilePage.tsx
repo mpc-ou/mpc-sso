@@ -43,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { VersionFooter } from '@/components/layout/VersionFooter';
 import { cn } from '@/lib/utils';
 import './profile.css';
 
@@ -917,6 +918,8 @@ export function ProfilePage() {
           <LinkedAccountsSection user={user} />
           <SecuritySection user={user} />
         </div>
+
+        <VersionFooter className="mt-8" />
       </div>
     </div>
   );
