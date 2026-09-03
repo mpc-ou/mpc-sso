@@ -38,23 +38,48 @@ function TipsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog open={open} onClose={onClose} title="Hướng dẫn dùng webhook" className="sm:max-w-lg">
       <div className="space-y-4 text-sm text-slate-600">
+        <div className="rounded-lg border border-[#5865F2]/20 bg-[#5865F2]/5 p-3">
+          <p className="font-semibold text-slate-800">Dán thẳng Discord Webhook URL?</p>
+          <p className="mt-1">
+            Nếu URL có dạng{' '}
+            <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
+              https://discord.com/api/webhooks/...
+            </code>{' '}
+            (lấy từ Cài đặt kênh → Tích hợp → Webhooks trên Discord), hệ thống sẽ <strong>tự động</strong> gửi tin
+            nhắn dạng embed đẹp mắt thẳng vào kênh đó — không cần bot, không cần server riêng. Nếu người dùng liên
+            quan đã liên kết Discord (qua trang hồ sơ), tên của họ sẽ hiện thành mention{' '}
+            <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">@user</code> trong tin nhắn.
+          </p>
+        </div>
+
         <p>
-          Khi sự kiện xảy ra, hệ thống sẽ gửi <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">POST</code>{' '}
-          tới URL của bạn với nội dung JSON dạng:
+          Với URL khác (server bot của riêng bạn), hệ thống gửi{' '}
+          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">POST</code> với nội dung JSON dạng:
         </p>
         <pre className="overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100">
 {`{
   "event": "profile.updated",
   "timestamp": "2026-09-03T02:30:00.000Z",
-  "data": { "actorId": "...", "targetId": "...", ... }
+  "data": {
+    "actorId": "...", "actorDiscordId": "...",
+    "targetId": "...", "targetDiscordId": "...",
+    ...
+  }
 }`}
         </pre>
+        <p>
+          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">actorDiscordId</code>/
+          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">targetDiscordId</code> chỉ xuất hiện khi người
+          dùng đó đã liên kết Discord — dùng trực tiếp để bot thao tác (đổi role, nickname, v.v.) mà không cần tự
+          tra cứu theo username.
+        </p>
         <p>
           Mỗi request kèm header{' '}
           <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">X-MPC-Signature</code> dạng{' '}
           <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">sha256=&lt;hex&gt;</code> — chữ ký HMAC-SHA256
           của phần thân request (raw JSON), dùng secret được cấp khi tạo webhook. Hãy tự tính lại chữ ký này ở phía
-          bạn và so sánh để xác minh request thực sự đến từ MPC SSO trước khi xử lý.
+          bạn và so sánh để xác minh request thực sự đến từ MPC SSO trước khi xử lý. (Discord tự bỏ qua header lạ
+          nên header này vẫn được gửi kèm dù bạn dùng Discord Webhook URL trực tiếp.)
         </p>
         <p>
           Mỗi request có thời hạn chờ 5 giây, <strong>không tự động thử lại</strong> nếu thất bại — bạn có thể xem

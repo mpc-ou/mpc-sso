@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { AppConfig } from '../config/config';
+import { buildDiscordEmbed, isDiscordWebhookUrl } from './discord-embed';
 import { decryptSecret, hmacSha256Hex } from '../lib/crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -29,7 +30,6 @@ function isPublicEvent(event: string): event is PublicEvent {
   return (PUBLIC_EVENTS as readonly string[]).includes(event);
 }
 
-/** e.g. "department.created" -> "created" — lets the audit log show a default action when a caller didn't pass one */
 function inferActionFromEvent(event: string): string | undefined {
   const suffix = event.split('.').pop();
   return suffix === 'created' || suffix === 'updated' || suffix === 'deleted'
@@ -46,21 +46,25 @@ export class EventsService {
     private readonly configService: ConfigService<AppConfig, true>,
   ) {}
 
+  /** Always writes an audit log row; additionally dispatches webhooks for public events. Never throws. */
   async record(input: RecordEventInput): Promise<void> {
-    // If the caller didn't supply changedFields or extra detail, fall back to
-    // whatever the event name itself implies (e.g. "client.created" -> action: "created")
-    // so the audit log never shows a bare "—" for a routine create/update/delete.
-    const inferredAction = input.changedFields?.length
-      ? undefined
-      : inferActionFromEvent(input.event);
-    const extra =
-      input.extra ?? (inferredAction ? { action: inferredAction } : undefined);
-
     try {
-      const actorLabel =
-        input.actorLabel ?? (await this.lookupUsername(input.actorId));
-      const targetLabel =
-        input.targetLabel ?? (await this.lookupUsername(input.targetId));
+      // If the caller didn't supply changedFields or extra detail, fall back to
+      // whatever the event name itself implies (e.g. "client.created" -> action: "created")
+      // so the audit log never shows a bare "—" for a routine create/update/delete.
+      const inferredAction = input.changedFields?.length
+        ? undefined
+        : inferActionFromEvent(input.event);
+      const extra =
+        input.extra ??
+        (inferredAction ? { action: inferredAction } : undefined);
+
+      const [actor, target] = await Promise.all([
+        this.lookupUser(input.actorId),
+        this.lookupUser(input.targetId),
+      ]);
+      const actorLabel = input.actorLabel ?? actor?.username;
+      const targetLabel = input.targetLabel ?? target?.username;
 
       await this.prisma.auditLog.create({
         data: {
@@ -76,33 +80,47 @@ export class EventsService {
           ip: input.ip,
         },
       });
-    } catch (err) {
-      this.logger.error(
-        `Failed to write audit log for ${input.event}`,
-        err as Error,
-      );
-    }
 
-    if (!isPublicEvent(input.event)) return;
+      if (!isPublicEvent(input.event)) return;
 
-    const webhooks = await this.prisma.webhook.findMany({
-      where: { event: input.event, isActive: true },
-    });
-    if (webhooks.length === 0) return;
+      const webhooks = await this.prisma.webhook.findMany({
+        where: { event: input.event, isActive: true },
+      });
+      if (webhooks.length === 0) return;
 
-    const payload = JSON.stringify({
-      event: input.event,
-      timestamp: new Date().toISOString(),
-      data: {
-        actorId: input.actorId,
-        targetId: input.targetId,
+      const customPayload = JSON.stringify({
+        event: input.event,
+        timestamp: new Date().toISOString(),
+        data: {
+          actorId: input.actorId,
+          actorDiscordId: actor?.discordId ?? undefined,
+          targetId: input.targetId,
+          targetDiscordId: target?.discordId ?? undefined,
+          changedFields: input.changedFields,
+          ...extra,
+        },
+      });
+
+      const discordPayload = buildDiscordEmbed({
+        event: input.event,
+        actorLabel,
+        actorDiscordId: actor?.discordId ?? undefined,
+        targetLabel,
+        targetDiscordId: target?.discordId ?? undefined,
         changedFields: input.changedFields,
-        ...extra,
-      },
-    });
+        extra,
+        ip: input.ip,
+      });
 
-    for (const webhook of webhooks) {
-      void this.deliver(webhook, input.event, payload);
+      for (const webhook of webhooks) {
+        void this.deliver(
+          webhook,
+          input.event,
+          isDiscordWebhookUrl(webhook.url) ? discordPayload : customPayload,
+        );
+      }
+    } catch (err) {
+      this.logger.error(`Failed to record event ${input.event}`, err as Error);
     }
   }
 
@@ -131,8 +149,6 @@ export class EventsService {
           'X-MPC-Event': event,
         },
         body: payload,
-        // Never follow redirects — a compromised/malicious target could 302
-        // to an internal address, bypassing the SSRF check done at write time.
         redirect: 'manual',
         signal: AbortSignal.timeout(DELIVERY_TIMEOUT_MS),
       });
@@ -158,13 +174,15 @@ export class EventsService {
     }
   }
 
-  private async lookupUsername(userId?: string): Promise<string | undefined> {
+  private async lookupUser(
+    userId?: string,
+  ): Promise<{ username: string; discordId: string | null } | undefined> {
     if (!userId) return undefined;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { username: true },
+      select: { username: true, discordId: true },
     });
-    return user?.username;
+    return user ?? undefined;
   }
 
   private async pruneDeliveries(webhookId: string): Promise<void> {
