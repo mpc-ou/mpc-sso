@@ -16,7 +16,8 @@ export interface User {
   googleId: string | null;
   webRole: WebRole;
   isDisabled: boolean;
-  
+  isProfileLocked?: boolean;
+
   // Profile fields (merged from Member)
   firstName?: string | null;
   middleName?: string | null;
@@ -29,6 +30,12 @@ export interface User {
   phone?: string | null;
   avatar?: string | null;
   bio?: string | null;
+
+  // Discord account link
+  discordId?: string | null;
+  discordUsername?: string | null;
+  discordAvatar?: string | null;
+  discordLinkedAt?: string | null;
 
   createdAt: string;
   updatedAt: string;
@@ -72,6 +79,63 @@ export interface Client {
 
 export interface ClientWithSecret extends Client {
   clientSecret: string;
+}
+
+export type WebhookEvent = 'member.changed' | 'auth.login';
+
+export interface WebhookDelivery {
+  id: string;
+  webhookId: string;
+  event: string;
+  statusCode: number | null;
+  ok: boolean;
+  error: string | null;
+  durationMs: number;
+  createdAt: string;
+}
+
+export interface Webhook {
+  id: string;
+  events: string[];
+  url: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  lastDelivery: WebhookDelivery | null;
+}
+
+export interface WebhookWithSecret extends Webhook {
+  secret: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  event: string;
+  actorId: string | null;
+  actorLabel: string | null;
+  targetId: string | null;
+  targetLabel: string | null;
+  changedFields: string[];
+  metadata: Record<string, unknown> | null;
+  ip: string | null;
+  createdAt: string;
+}
+
+export interface RecentLogin {
+  id: string;
+  username: string;
+  avatar: string | null;
+  method: string;
+  ip: string | null;
+  createdAt: string;
+}
+
+export interface DashboardStats {
+  totalLogins: number;
+  loginsToday: number;
+  activeNow: number;
+  recentLogins: RecentLogin[];
 }
 
 export interface Paginated<T> {

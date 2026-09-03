@@ -26,9 +26,14 @@ export class AdminSessionController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: AdminLoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    const { sessionId, expiresAt } = await this.sessionService.login(dto);
+    const { sessionId, expiresAt } = await this.sessionService.login(
+      dto,
+      req.ip,
+      req.header('User-Agent'),
+    );
 
     res.cookie(ADMIN_SESSION_COOKIE, sessionId, {
       httpOnly: true,

@@ -5,5 +5,6 @@ import { TokenService } from './token.service';
 @Module({
   controllers: [TokenController],
   providers: [TokenService],
+  exports: [TokenService],
 })
 export class TokenModule {}

@@ -52,6 +52,19 @@ model User {
   avatar     String?
   bio        String?
 
+  // Self-service profile controls
+  isProfileLocked Boolean @default(false)
+
+  // Discord account link (verified)
+  discordId       String?   @unique
+  discordUsername String?
+  discordAvatar   String?
+  discordLinkedAt DateTime?
+
+  // Activity tracking (Phase 2)
+  lastActiveAt DateTime?
+  lastActiveIp String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -59,8 +72,95 @@ model User {
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]
   clubRoles      ClubRole[]
+  userSessions   UserSession[]
+  loginEvents    LoginEvent[]
 
   @@map("users")
+}
+
+model LoginEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  method    String // "password" | "google" | "admin"
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("login_events")
+}
+
+model Webhook {
+  id         String   @id @default(cuid())
+  events     String[] // subset of "member.changed" | "auth.login"
+  url        String
+  secretEnc  String // AES-256-GCM encrypted (must be reversible to sign future deliveries — unlike Client.clientSecretHash)
+  isActive   Boolean  @default(true)
+  createdBy  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries WebhookDelivery[]
+
+  @@index([events])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id         String  @id @default(cuid())
+  webhookId  String
+  event      String
+  statusCode Int?
+  ok         Boolean
+  error      String?
+  durationMs Int
+
+  createdAt DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@map("webhook_deliveries")
+}
+
+model AuditLog {
+  id            String  @id @default(cuid())
+  event         String
+  actorId       String?
+  actorLabel    String?
+  targetId      String?
+  targetLabel   String?
+  changedFields String? // JSON string array, nullable
+  metadata      String? // JSON object, nullable — e.g. {"action":"created"} or {"method":"password"}
+  ip            String?
+
+  createdAt DateTime @default(now())
+
+  @@index([event])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  userId    String
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("user_sessions")
 }
 
 model Department {

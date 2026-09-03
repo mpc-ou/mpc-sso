@@ -1,16 +1,31 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
 import {
-  type AccessTokenData,
-  BearerAuthGuard,
-} from '../common/guards/bearer-auth.guard';
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AccessTokenData } from '../common/guards/bearer-auth.guard';
+import { SelfAuthGuard } from '../auth/guards/self-auth.guard';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './profile.service';
 
 @Controller('profile')
-@UseGuards(BearerAuthGuard)
+@UseGuards(SelfAuthGuard)
 export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+  constructor(
+    private readonly profileService: ProfileService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get()
   getProfile(@CurrentUser() tokenData: AccessTokenData) {
@@ -21,7 +36,39 @@ export class ProfileController {
   updateProfile(
     @CurrentUser() tokenData: AccessTokenData,
     @Body() dto: UpdateProfileDto,
+    @Req() req: Request,
   ) {
-    return this.profileService.updateProfile(tokenData.userId, dto);
+    return this.profileService.updateProfile(tokenData.userId, dto, req.ip);
+  }
+
+  @Post('upload-avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(
+    @CurrentUser() tokenData: AccessTokenData,
+    @UploadedFile() file: any,
+    @Req() req: Request,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    const current = await this.profileService.getProfile(tokenData.userId);
+    if (current.avatar) {
+      try {
+        await this.cloudinaryService.deleteFile(current.avatar);
+      } catch (err) {
+        console.error('Failed to delete old avatar from Cloudinary:', err);
+      }
+    }
+
+    const result = (await this.cloudinaryService.uploadFile(file)) as {
+      secure_url: string;
+    };
+    await this.profileService.updateProfile(
+      tokenData.userId,
+      { avatar: result.secure_url },
+      req.ip,
+    );
+    return { url: result.secure_url };
   }
 }

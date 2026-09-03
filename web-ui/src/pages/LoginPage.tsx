@@ -115,7 +115,7 @@ export function LoginPage() {
     <div className="flex min-h-screen bg-slate-100">
       <div
         className="relative hidden flex-[1.4] flex-col justify-between bg-cover bg-center p-12 text-white md:flex"
-        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}about.jpg)` }}
+        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}mpclub-common.webp)` }}
       >
         <div className="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-950/40 to-slate-950/70" />
         <div className="relative font-extrabold tracking-wide">

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
+import { VersionFooter } from './VersionFooter';
 
 export function DashboardLayout() {
   return (
@@ -11,6 +12,7 @@ export function DashboardLayout() {
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
+        <VersionFooter className="border-t border-slate-200 bg-white" />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import { ArrowLeft, UserCircle2, Award, UserCheck } from 'lucide-react';
+import { ArrowLeft, UserCircle2, Award, UserCheck, Lock, LockOpen } from 'lucide-react';
 import { clubRolesApi } from '@/api/club-roles';
 import { ApiError } from '@/api/client';
 import { departmentsApi } from '@/api/departments';
@@ -243,6 +243,15 @@ export function UserDetailPage() {
     },
   });
 
+  const toggleProfileLockMutation = useMutation({
+    mutationFn: (isProfileLocked: boolean) =>
+      usersApi.update(id!, { isProfileLocked }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['users'] });
+      void queryClient.invalidateQueries({ queryKey: ['users', id] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => usersApi.remove(id!),
     onSuccess: () => {
@@ -316,6 +325,35 @@ export function UserDetailPage() {
               Vô hiệu hoá tài khoản
             </Button>
           )}
+          {user.isProfileLocked ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+              onClick={() => toggleProfileLockMutation.mutate(false)}
+              disabled={toggleProfileLockMutation.isPending}
+            >
+              <LockOpen className="h-3.5 w-3.5" /> Mở khoá sửa hồ sơ
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+              onClick={() => {
+                if (
+                  confirm(
+                    'Khoá sửa hồ sơ sẽ ngăn người dùng tự sửa thông tin cá nhân qua SSO/profile. Bạn vẫn có thể sửa thông tin của họ ở đây bình thường. Tiếp tục?',
+                  )
+                ) {
+                  toggleProfileLockMutation.mutate(true);
+                }
+              }}
+              disabled={toggleProfileLockMutation.isPending}
+            >
+              <Lock className="h-3.5 w-3.5" /> Khoá sửa hồ sơ
+            </Button>
+          )}
           <Button
             variant="destructive"
             size="sm"
@@ -364,8 +402,26 @@ export function UserDetailPage() {
               )}
             </div>
             <div className="flex justify-between items-center py-1">
+              <span className="text-slate-500 font-medium">Sửa hồ sơ (SSO/profile)</span>
+              {user.isProfileLocked ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20 ring-inset">
+                  <Lock className="h-3 w-3" /> Đã khoá
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset">
+                  Cho phép
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center py-1">
               <span className="text-slate-500 font-medium">Google Linked</span>
               <span className="font-medium text-slate-700">{user.googleId ? 'Có' : 'Không'}</span>
+            </div>
+            <div className="flex justify-between items-center py-1">
+              <span className="text-slate-500 font-medium">Discord Linked</span>
+              <span className="font-medium text-slate-700">
+                {user.discordId ? `Có (${user.discordUsername})` : 'Không'}
+              </span>
             </div>
             <div className="flex justify-between items-center py-1">
               <span className="text-slate-500 font-medium">Ngày tạo</span>

@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { configuration } from './config/config';
+import { DiscordModule } from './connect/discord/discord.module';
 import { DiscoveryModule } from './discovery/discovery.module';
 import { LogoutModule } from './logout/logout.module';
 import { PasswordModule } from './password/password.module';
@@ -27,6 +28,7 @@ import { UserinfoModule } from './userinfo/userinfo.module';
     AdminModule,
     PasswordModule,
     ProfileModule,
+    DiscordModule,
     ApiModule,
     // Registered last: its GET admin/ui/* wildcard must not shadow AdminModule's
     // POST admin/ui/login|logout and GET admin/ui/me routes above.

@@ -25,6 +25,7 @@ export interface UpdateUserPayload {
   email?: string | null;
   webRole?: WebRole;
   isDisabled?: boolean;
+  isProfileLocked?: boolean;
   password?: string;
 
   firstName?: string;
@@ -50,6 +51,14 @@ export const usersApi = {
     if (sortOrder) url += `&sortOrder=${sortOrder}`;
     return api.get<Paginated<User>>(url);
   },
+  listIds: (search = '', webRole = '', status = '') => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (webRole) params.set('webRole', webRole);
+    if (status) params.set('status', status);
+    const qs = params.toString();
+    return api.get<string[]>(`/admin/users/ids${qs ? `?${qs}` : ''}`);
+  },
   get: (id: string) => api.get<User>(`/admin/users/${id}`),
   create: (payload: CreateUserPayload) => api.post<User>('/admin/users', payload),
   update: (id: string, payload: UpdateUserPayload) =>
@@ -58,6 +67,10 @@ export const usersApi = {
     api.delete<{ id: string; deleted: boolean }>(`/admin/users/${id}`),
   bulkRemove: (ids: string[]) =>
     api.delete<{ count: number }>('/admin/users/bulk', { ids }),
+  lockAll: (isProfileLocked: boolean) =>
+    api.patch<{ count: number }>('/admin/users/lock-all', { isProfileLocked }),
+  bulkLock: (ids: string[], isProfileLocked: boolean) =>
+    api.patch<{ count: number }>('/admin/users/bulk-lock', { ids, isProfileLocked }),
   uploadAvatar: (file: File, oldUrl?: string) => {
     const formData = new FormData();
     formData.append('file', file);

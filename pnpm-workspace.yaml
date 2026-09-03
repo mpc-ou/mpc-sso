@@ -1,6 +1,8 @@
 packages:
   - '.'
   - 'web-ui'
+overrides:
+  zod: ^4.4.3
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true

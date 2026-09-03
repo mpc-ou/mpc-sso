@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { EventsService } from '../../events/events.service';
 import { generateToken } from '../../lib/crypto';
 import { dummyVerify, verifyPassword } from '../../lib/password';
 import { stripPassword } from '../../lib/user-claims';
@@ -13,10 +14,15 @@ const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 @Injectable()
 export class AdminSessionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventsService,
+  ) {}
 
   async login(
     dto: AdminLoginDto,
+    ip: string | undefined,
+    userAgent: string | undefined,
   ): Promise<{ sessionId: string; expiresAt: Date }> {
     const login = dto.login.trim();
     const user = await this.prisma.user.findFirst({
@@ -36,8 +42,21 @@ export class AdminSessionService {
     const sessionId = generateToken();
     const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
-    await this.prisma.adminSession.create({
-      data: { sessionId, userId: user.id, expiresAt },
+    await this.prisma.$transaction([
+      this.prisma.adminSession.create({
+        data: { sessionId, userId: user.id, expiresAt },
+      }),
+      this.prisma.loginEvent.create({
+        data: { userId: user.id, method: 'admin', ip, userAgent },
+      }),
+    ]);
+
+    await this.events.record({
+      event: 'auth.login',
+      actorId: user.id,
+      targetId: user.id,
+      ip,
+      extra: { method: 'admin' },
     });
 
     return { sessionId, expiresAt };
