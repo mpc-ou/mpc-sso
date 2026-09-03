@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Filter, ScrollText } from 'lucide-react';
 import { useState } from 'react';
 import { auditLogApi } from '@/api/audit-log';
+import type { AuditLogEntry } from '@/api/types';
 import { SimpleSelect } from '@/components/SimpleSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,40 @@ const EVENT_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
   'member.changed': 'secondary',
   'auth.login': 'outline',
 };
+
+const ACTION_LABELS: Record<string, string> = {
+  created: 'Tạo mới',
+  updated: 'Cập nhật',
+  deleted: 'Xoá',
+  'locked-all': 'Khoá toàn bộ',
+  'unlocked-all': 'Mở khoá toàn bộ',
+};
+
+const METHOD_LABELS: Record<string, string> = {
+  password: 'Mật khẩu',
+  google: 'Google',
+  admin: 'Admin',
+};
+
+/** Human-readable summary of what happened — falls back through changed fields, then metadata */
+function formatDetail(entry: AuditLogEntry): string {
+  if (entry.changedFields.length > 0) {
+    return entry.changedFields.join(', ');
+  }
+  const meta = entry.metadata;
+  if (!meta) return '—';
+
+  if (typeof meta.action === 'string') {
+    const label = ACTION_LABELS[meta.action] ?? meta.action;
+    return typeof meta.count === 'number' ? `${label} (${meta.count} user)` : label;
+  }
+  if (typeof meta.method === 'string') {
+    return `Qua ${METHOD_LABELS[meta.method] ?? meta.method}`;
+  }
+  return Object.entries(meta)
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join(', ');
+}
 
 export function AuditLogPage() {
   const [page, setPage] = useState(1);
@@ -82,7 +117,7 @@ export function AuditLogPage() {
                 <TableHead>Sự kiện</TableHead>
                 <TableHead>Người thực hiện</TableHead>
                 <TableHead>Đối tượng</TableHead>
-                <TableHead>Trường thay đổi</TableHead>
+                <TableHead>Chi tiết</TableHead>
                 <TableHead>IP</TableHead>
               </TableRow>
             </TableHeader>
@@ -112,7 +147,7 @@ export function AuditLogPage() {
                     {entry.targetLabel ?? <span className="text-slate-400">—</span>}
                   </TableCell>
                   <TableCell className="max-w-xs truncate text-xs text-slate-500">
-                    {entry.changedFields.length > 0 ? entry.changedFields.join(', ') : '—'}
+                    {formatDetail(entry)}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-slate-500">
                     {entry.ip ?? '—'}

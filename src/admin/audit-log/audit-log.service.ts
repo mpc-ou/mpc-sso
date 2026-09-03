@@ -27,6 +27,9 @@ export class AuditLogService {
         changedFields: item.changedFields
           ? (JSON.parse(item.changedFields) as string[])
           : [],
+        metadata: item.metadata
+          ? (JSON.parse(item.metadata) as Record<string, unknown>)
+          : null,
       })),
       total,
       page: query.page ?? 1,

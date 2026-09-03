@@ -5,11 +5,13 @@ import {
   Get,
   Patch,
   Post,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AccessTokenData } from '../common/guards/bearer-auth.guard';
 import { SelfAuthGuard } from '../auth/guards/self-auth.guard';
@@ -34,8 +36,9 @@ export class ProfileController {
   updateProfile(
     @CurrentUser() tokenData: AccessTokenData,
     @Body() dto: UpdateProfileDto,
+    @Req() req: Request,
   ) {
-    return this.profileService.updateProfile(tokenData.userId, dto);
+    return this.profileService.updateProfile(tokenData.userId, dto, req.ip);
   }
 
   @Post('upload-avatar')
@@ -43,6 +46,7 @@ export class ProfileController {
   async uploadAvatar(
     @CurrentUser() tokenData: AccessTokenData,
     @UploadedFile() file: any,
+    @Req() req: Request,
   ) {
     if (!file) {
       throw new BadRequestException('File is required');
@@ -60,9 +64,11 @@ export class ProfileController {
     const result = (await this.cloudinaryService.uploadFile(file)) as {
       secure_url: string;
     };
-    await this.profileService.updateProfile(tokenData.userId, {
-      avatar: result.secure_url,
-    });
+    await this.profileService.updateProfile(
+      tokenData.userId,
+      { avatar: result.secure_url },
+      req.ip,
+    );
     return { url: result.secure_url };
   }
 }

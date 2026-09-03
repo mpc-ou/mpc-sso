@@ -33,7 +33,7 @@ export class ProfileService {
     return stripPassword(user);
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto) {
+  async updateProfile(userId: string, dto: UpdateProfileDto, ip?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -79,6 +79,7 @@ export class ProfileService {
       targetId: userId,
       targetLabel: user.username,
       changedFields,
+      ip,
     });
 
     return updated;

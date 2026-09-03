@@ -33,7 +33,7 @@ export class UsersController {
 
   @Post()
   create(@Body() dto: CreateUserDto, @Req() req: Request) {
-    return this.usersService.create(dto, actorIdFrom(req));
+    return this.usersService.create(dto, actorIdFrom(req), req.ip);
   }
 
   @Post('upload-avatar')
@@ -63,6 +63,11 @@ export class UsersController {
     return this.usersService.list(query);
   }
 
+  @Get('ids')
+  listIds(@Query() query: UserQueryDto) {
+    return this.usersService.listIds(query);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
@@ -76,6 +81,7 @@ export class UsersController {
     return this.usersService.bulkSetProfileLocked(
       isProfileLocked,
       actorIdFrom(req),
+      req.ip,
     );
   }
 
@@ -85,16 +91,16 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
     @Req() req: Request,
   ) {
-    return this.usersService.update(id, dto, actorIdFrom(req));
+    return this.usersService.update(id, dto, actorIdFrom(req), req.ip);
   }
 
   @Delete('bulk')
   bulkDelete(@Body('ids') ids: string[], @Req() req: Request) {
-    return this.usersService.bulkDelete(ids, actorIdFrom(req));
+    return this.usersService.bulkDelete(ids, actorIdFrom(req), req.ip);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Req() req: Request) {
-    return this.usersService.delete(id, actorIdFrom(req));
+    return this.usersService.delete(id, actorIdFrom(req), req.ip);
   }
 }

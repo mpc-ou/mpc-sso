@@ -21,7 +21,7 @@ export class UsersService {
     private readonly events: EventsService,
   ) {}
 
-  async list(query: UserQueryDto) {
+  private buildWhere(query: UserQueryDto): Prisma.UserWhereInput {
     const where: Prisma.UserWhereInput = {};
 
     if (query.webRole) {
@@ -44,6 +44,22 @@ export class UsersService {
         { mssv: { contains: s, mode: 'insensitive' } },
       ];
     }
+
+    return where;
+  }
+
+  /** All ids matching the current filter, ignoring pagination — powers "select all N filtered users" in the UI */
+  async listIds(query: UserQueryDto): Promise<string[]> {
+    const where = this.buildWhere(query);
+    const users = await this.prisma.user.findMany({
+      where,
+      select: { id: true },
+    });
+    return users.map((u) => u.id);
+  }
+
+  async list(query: UserQueryDto) {
+    const where = this.buildWhere(query);
 
     let orderBy:
       | Prisma.UserOrderByWithRelationInput
@@ -92,7 +108,7 @@ export class UsersService {
     return toSafeUser(user);
   }
 
-  async create(dto: CreateUserDto, actorId?: string) {
+  async create(dto: CreateUserDto, actorId?: string, ip?: string) {
     const existingUsername = await this.prisma.user.findUnique({
       where: { username: dto.username },
     });
@@ -137,12 +153,13 @@ export class UsersService {
       actorId,
       targetId: user.id,
       extra: { action: 'created' },
+      ip,
     });
 
     return toSafeUser(user);
   }
 
-  async update(id: string, dto: UpdateUserDto, actorId?: string) {
+  async update(id: string, dto: UpdateUserDto, actorId?: string, ip?: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -185,18 +202,20 @@ export class UsersService {
       actorId,
       targetId: id,
       changedFields,
+      ip,
     });
     await this.events.record({
       event: 'member.changed',
       actorId,
       targetId: id,
       extra: { action: 'updated' },
+      ip,
     });
 
     return toSafeUser(updated);
   }
 
-  async delete(id: string, actorId?: string) {
+  async delete(id: string, actorId?: string, ip?: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -208,13 +227,18 @@ export class UsersService {
       targetId: id,
       targetLabel: user.username,
       extra: { action: 'deleted' },
+      ip,
     });
 
     return { id, deleted: true };
   }
 
   /** Locks or unlocks self-service profile editing for every user in the system */
-  async bulkSetProfileLocked(isProfileLocked: boolean, actorId?: string) {
+  async bulkSetProfileLocked(
+    isProfileLocked: boolean,
+    actorId?: string,
+    ip?: string,
+  ) {
     const result = await this.prisma.user.updateMany({
       data: { isProfileLocked },
     });
@@ -226,12 +250,13 @@ export class UsersService {
         action: isProfileLocked ? 'locked-all' : 'unlocked-all',
         count: result.count,
       },
+      ip,
     });
 
     return { count: result.count };
   }
 
-  async bulkDelete(ids: string[], actorId?: string) {
+  async bulkDelete(ids: string[], actorId?: string, ip?: string) {
     const users = await this.prisma.user.findMany({
       where: { id: { in: ids } },
       select: { id: true, username: true },
@@ -248,6 +273,7 @@ export class UsersService {
         targetId: user.id,
         targetLabel: user.username,
         extra: { action: 'deleted' },
+        ip,
       });
     }
 

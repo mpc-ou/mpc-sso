@@ -136,6 +136,7 @@ model AuditLog {
   targetId      String?
   targetLabel   String?
   changedFields String? // JSON string array, nullable
+  metadata      String? // JSON object, nullable — e.g. {"action":"created"} or {"method":"password"}
   ip            String?
 
   createdAt DateTime @default(now())

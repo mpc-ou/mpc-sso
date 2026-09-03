@@ -55,6 +55,7 @@ export class EventsService {
           changedFields: input.changedFields?.length
             ? JSON.stringify(input.changedFields)
             : undefined,
+          metadata: input.extra ? JSON.stringify(input.extra) : undefined,
           ip: input.ip,
         },
       });

@@ -117,6 +117,7 @@ export interface AuditLogEntry {
   targetId: string | null;
   targetLabel: string | null;
   changedFields: string[];
+  metadata: Record<string, unknown> | null;
   ip: string | null;
   createdAt: string;
 }

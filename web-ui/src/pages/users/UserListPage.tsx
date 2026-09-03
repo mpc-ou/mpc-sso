@@ -122,6 +122,11 @@ export function UserListPage() {
     },
   });
 
+  const selectAllMatchingMutation = useMutation({
+    mutationFn: () => usersApi.listIds(search, role, status),
+    onSuccess: (ids) => setSelectedIds(ids),
+  });
+
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   const handleSearchChange = (val: string) => {
@@ -258,6 +263,37 @@ export function UserListPage() {
           </Link>
         </div>
       </div>
+
+      {data && data.total > data.items.length && selectedIds.length === data.total && (
+        <div className="flex items-center justify-center gap-2 rounded-lg bg-brand-50 px-4 py-2 text-sm text-brand-800">
+          Đã chọn tất cả {selectedIds.length} người dùng phù hợp bộ lọc.
+          <button
+            type="button"
+            onClick={() => setSelectedIds([])}
+            className="font-semibold underline cursor-pointer"
+          >
+            Bỏ chọn
+          </button>
+        </div>
+      )}
+      {data &&
+        data.total > data.items.length &&
+        isAllSelected &&
+        selectedIds.length !== data.total && (
+          <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm text-slate-600">
+            Đã chọn {data.items.length} người dùng trên trang này.
+            <button
+              type="button"
+              onClick={() => selectAllMatchingMutation.mutate()}
+              disabled={selectAllMatchingMutation.isPending}
+              className="font-semibold text-brand-700 underline cursor-pointer disabled:opacity-50"
+            >
+              {selectAllMatchingMutation.isPending
+                ? 'Đang chọn...'
+                : `Chọn tất cả ${data.total} người dùng phù hợp bộ lọc`}
+            </button>
+          </div>
+        )}
 
       {/* Filter Bar */}
       <Card className="shadow-sm border-slate-200">
