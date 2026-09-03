@@ -151,7 +151,7 @@ export function OidcLoginPage() {
       >
         <img
           ref={bgRef}
-          src={`${import.meta.env.BASE_URL}about.jpg`}
+          src={`${import.meta.env.BASE_URL}mpclub-common.webp`}
           alt=""
           className="absolute -inset-6 h-[calc(100%+3rem)] w-[calc(100%+3rem)] scale-105 object-cover transition-transform duration-150 ease-out"
         />
