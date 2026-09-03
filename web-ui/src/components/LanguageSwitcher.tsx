@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ className }: { className?: string } = {}) {
   const { i18n } = useTranslation();
   const currentLang = i18n.language?.startsWith('en') ? 'en' : 'vi';
 
@@ -15,7 +15,7 @@ export function LanguageSwitcher() {
       variant="outline"
       size="sm"
       onClick={toggle}
-      className="absolute top-4 right-4 z-10"
+      className={className ?? 'absolute top-4 right-4 z-10'}
       type="button"
     >
       {currentLang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}

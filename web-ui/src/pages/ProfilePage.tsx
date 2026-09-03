@@ -24,6 +24,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { authApi } from '@/api/auth';
 import { ApiError } from '@/api/client';
@@ -41,6 +42,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import './profile.css';
 
@@ -74,6 +76,7 @@ function InfoRow({
   value: ReactNode;
   mono?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between gap-4 py-2.5">
       <span className="flex shrink-0 items-center gap-1.5 text-[0.8rem] text-slate-500">
@@ -86,7 +89,9 @@ function InfoRow({
           mono && 'mpc-font-mono font-normal tracking-tight',
         )}
       >
-        {value || <span className="font-normal text-slate-300">Chưa cập nhật</span>}
+        {value || (
+          <span className="font-normal text-slate-300">{t('profile.common.notUpdated')}</span>
+        )}
       </span>
     </div>
   );
@@ -109,6 +114,7 @@ function SectionPanel({
   editDisabled: boolean;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <section id={id} className="scroll-mt-32">
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
@@ -130,9 +136,9 @@ function SectionPanel({
             size="sm"
             onClick={onEdit}
             disabled={editDisabled}
-            title={editDisabled ? 'Hồ sơ đã bị quản trị viên khoá' : undefined}
+            title={editDisabled ? t('profile.locked.editTitle') : undefined}
           >
-            <Pencil className="h-3.5 w-3.5" /> Sửa
+            <Pencil className="h-3.5 w-3.5" /> {t('profile.common.edit')}
           </Button>
         </div>
         <div className="divide-y divide-slate-100 px-5">{children}</div>
@@ -169,6 +175,7 @@ function EditDialog({
   submitting: boolean;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -188,10 +195,10 @@ function EditDialog({
             <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
               {submitting ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang lưu...
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t('profile.common.saving')}
                 </>
               ) : (
-                'Lưu thay đổi'
+                t('profile.common.save')
               )}
             </Button>
           </DialogFooter>
@@ -201,27 +208,29 @@ function EditDialog({
   );
 }
 
-const LOCKED_HINT = 'Trường này đã có dữ liệu — có thể sửa nhưng không thể để trống.';
-
 // ── Personal section (always editable) ────────────────────────────
 
-const personalSchema = z.object({
-  lastName: z.string().trim().min(1, 'Vui lòng nhập họ'),
-  middleName: z.string().trim().optional(),
-  firstName: z.string().trim().min(1, 'Vui lòng nhập tên'),
-});
-type PersonalValues = z.infer<typeof personalSchema>;
+function makePersonalSchema(t: (key: string) => string) {
+  return z.object({
+    lastName: z.string().trim().min(1, t('profile.personal.lastNameRequired')),
+    middleName: z.string().trim().optional(),
+    firstName: z.string().trim().min(1, t('profile.personal.firstNameRequired')),
+  });
+}
+type PersonalValues = z.infer<ReturnType<typeof makePersonalSchema>>;
 
 function PersonalSection({ user }: { user: User }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const schema = useMemo(() => makePersonalSchema(t), [t]);
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<PersonalValues>({
-    resolver: zodResolver(personalSchema),
+    resolver: zodResolver(schema),
     values: {
       lastName: user.lastName ?? '',
       middleName: user.middleName ?? '',
@@ -241,44 +250,44 @@ function PersonalSection({ user }: { user: User }) {
     <SectionPanel
       id="personal"
       icon={UserRound}
-      title="Cá nhân"
-      description="Họ tên hiển thị trong hồ sơ MPC của bạn"
+      title={t('profile.personal.title')}
+      description={t('profile.personal.description')}
       editDisabled={Boolean(user.isProfileLocked)}
       onEdit={() => {
         reset();
         setOpen(true);
       }}
     >
-      <InfoRow label="Họ" value={user.lastName} />
-      <InfoRow label="Tên đệm" value={user.middleName} />
-      <InfoRow label="Tên" value={user.firstName} />
+      <InfoRow label={t('profile.personal.lastName')} value={user.lastName} />
+      <InfoRow label={t('profile.personal.middleName')} value={user.middleName} />
+      <InfoRow label={t('profile.personal.firstName')} value={user.firstName} />
 
       <EditDialog
         open={open}
         onOpenChange={setOpen}
         icon={UserRound}
-        title="Sửa thông tin cá nhân"
-        formError={mutation.isError ? errorMessage(mutation.error, 'Cập nhật thất bại') : null}
+        title={t('profile.personal.editTitle')}
+        formError={mutation.isError ? errorMessage(mutation.error, t('profile.common.updateFailed')) : null}
         submitting={mutation.isPending}
         onSubmit={handleSubmit((values) => mutation.mutate(values))}
       >
         <div className="grid grid-cols-3 gap-2.5">
           <div className="space-y-1.5">
             <Label htmlFor="lastName" className="text-xs font-semibold text-slate-600">
-              Họ
+              {t('profile.personal.lastName')}
             </Label>
             <Input id="lastName" autoFocus {...register('lastName')} />
             <FieldError message={errors.lastName?.message} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="middleName" className="text-xs font-semibold text-slate-600">
-              Tên đệm
+              {t('profile.personal.middleName')}
             </Label>
             <Input id="middleName" {...register('middleName')} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="firstName" className="text-xs font-semibold text-slate-600">
-              Tên
+              {t('profile.personal.firstName')}
             </Label>
             <Input id="firstName" {...register('firstName')} />
             <FieldError message={errors.firstName?.message} />
@@ -291,32 +300,34 @@ function PersonalSection({ user }: { user: User }) {
 
 // ── Student section (lock-once-set) ───────────────────────────────
 
-function makeStudentSchema(user: User) {
+function makeStudentSchema(user: User, t: (key: string) => string) {
+  const lockedHint = t('profile.locked.fieldHint');
   return z.object({
     mssv: z
       .string()
       .trim()
       .optional()
-      .refine((v) => !(user.mssv && !v), { message: LOCKED_HINT }),
+      .refine((v) => !(user.mssv && !v), { message: lockedHint }),
     className: z
       .string()
       .trim()
-      .max(10, 'Tối đa 10 ký tự')
+      .max(10, t('profile.student.classNameTooLong'))
       .optional()
-      .refine((v) => !(user.className && !v), { message: LOCKED_HINT }),
+      .refine((v) => !(user.className && !v), { message: lockedHint }),
     faculty: z
       .string()
       .trim()
       .optional()
-      .refine((v) => !(user.faculty && !v), { message: LOCKED_HINT }),
+      .refine((v) => !(user.faculty && !v), { message: lockedHint }),
   });
 }
 type StudentValues = z.infer<ReturnType<typeof makeStudentSchema>>;
 
 function StudentSection({ user }: { user: User }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const schema = useMemo(() => makeStudentSchema(user), [user]);
+  const schema = useMemo(() => makeStudentSchema(user, t), [user, t]);
   const {
     register,
     handleSubmit,
@@ -345,49 +356,49 @@ function StudentSection({ user }: { user: User }) {
     <SectionPanel
       id="student"
       icon={GraduationCap}
-      title="Sinh viên"
-      description="Thông tin học vụ — khoá lại từng phần sau khi điền"
+      title={t('profile.student.title')}
+      description={t('profile.student.description')}
       editDisabled={Boolean(user.isProfileLocked)}
       onEdit={() => {
         reset();
         setOpen(true);
       }}
     >
-      <InfoRow icon={Hash} label="MSSV" value={user.mssv} mono />
-      <InfoRow icon={Users} label="Lớp" value={user.className} mono />
-      <InfoRow icon={Building2} label="Khoa" value={user.faculty} />
+      <InfoRow icon={Hash} label={t('profile.student.mssv')} value={user.mssv} mono />
+      <InfoRow icon={Users} label={t('profile.student.className')} value={user.className} mono />
+      <InfoRow icon={Building2} label={t('profile.student.faculty')} value={user.faculty} />
 
       <EditDialog
         open={open}
         onOpenChange={setOpen}
         icon={GraduationCap}
-        title="Sửa thông tin sinh viên"
-        formError={mutation.isError ? errorMessage(mutation.error, 'Cập nhật thất bại') : null}
+        title={t('profile.student.editTitle')}
+        formError={mutation.isError ? errorMessage(mutation.error, t('profile.common.updateFailed')) : null}
         submitting={mutation.isPending}
         onSubmit={handleSubmit((values) => mutation.mutate(values))}
       >
         {anyLocked && (
           <p className="flex items-start gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-            <Lock className="mt-0.5 h-3 w-3 shrink-0" /> {LOCKED_HINT}
+            <Lock className="mt-0.5 h-3 w-3 shrink-0" /> {t('profile.locked.fieldHint')}
           </p>
         )}
         <div className="space-y-1.5">
           <Label htmlFor="mssv" className="text-xs font-semibold text-slate-600">
-            MSSV
+            {t('profile.student.mssv')}
           </Label>
           <Input id="mssv" className="mpc-font-mono" {...register('mssv')} />
           <FieldError message={errors.mssv?.message} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="className" className="text-xs font-semibold text-slate-600">
-            Lớp
+            {t('profile.student.className')}
           </Label>
           <Input id="className" className="mpc-font-mono" maxLength={10} {...register('className')} />
           <FieldError message={errors.className?.message} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="faculty" className="text-xs font-semibold text-slate-600">
-            Khoa
+            {t('profile.student.faculty')}
           </Label>
           <Input id="faculty" {...register('faculty')} />
           <FieldError message={errors.faculty?.message} />
@@ -401,32 +412,36 @@ function StudentSection({ user }: { user: User }) {
 
 const PHONE_RE = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
 
-function makeContactSchema(user: User) {
+function makeContactSchema(user: User, t: (key: string) => string) {
+  const lockedHint = t('profile.locked.fieldHint');
   return z.object({
     phone: z
       .string()
       .trim()
       .optional()
-      .refine((v) => !(user.phone && !v), { message: LOCKED_HINT })
-      .refine((v) => !v || PHONE_RE.test(v), { message: 'Số điện thoại không hợp lệ' }),
+      .refine((v) => !(user.phone && !v), { message: lockedHint })
+      .refine((v) => !v || PHONE_RE.test(v), { message: t('profile.contact.phoneInvalid') }),
     address: z
       .string()
       .trim()
       .optional()
-      .refine((v) => !(user.address && !v), { message: LOCKED_HINT }),
+      .refine((v) => !(user.address && !v), { message: lockedHint }),
     dob: z
       .string()
       .optional()
-      .refine((v) => !(user.dob && !v), { message: LOCKED_HINT })
-      .refine((v) => !v || new Date(v) <= new Date(), { message: 'Ngày sinh không hợp lệ' }),
+      .refine((v) => !(user.dob && !v), { message: lockedHint })
+      .refine((v) => !v || new Date(v) <= new Date(), {
+        message: t('profile.contact.dobInvalid'),
+      }),
   });
 }
 type ContactValues = z.infer<ReturnType<typeof makeContactSchema>>;
 
 function ContactSection({ user }: { user: User }) {
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const schema = useMemo(() => makeContactSchema(user), [user]);
+  const schema = useMemo(() => makeContactSchema(user, t), [user, t]);
   const {
     register,
     handleSubmit,
@@ -455,53 +470,57 @@ function ContactSection({ user }: { user: User }) {
     <SectionPanel
       id="contact"
       icon={Phone}
-      title="Liên hệ"
-      description="Số điện thoại, địa chỉ và ngày sinh của bạn"
+      title={t('profile.contact.title')}
+      description={t('profile.contact.description')}
       editDisabled={Boolean(user.isProfileLocked)}
       onEdit={() => {
         reset();
         setOpen(true);
       }}
     >
-      <InfoRow icon={Phone} label="Số điện thoại" value={user.phone} mono />
-      <InfoRow icon={MapPin} label="Địa chỉ" value={user.address} />
+      <InfoRow icon={Phone} label={t('profile.contact.phone')} value={user.phone} mono />
+      <InfoRow icon={MapPin} label={t('profile.contact.address')} value={user.address} />
       <InfoRow
         icon={Cake}
-        label="Ngày sinh"
-        value={user.dob ? new Date(user.dob).toLocaleDateString('vi-VN') : null}
+        label={t('profile.contact.dob')}
+        value={
+          user.dob
+            ? new Date(user.dob).toLocaleDateString(i18n.language.startsWith('en') ? 'en-US' : 'vi-VN')
+            : null
+        }
       />
 
       <EditDialog
         open={open}
         onOpenChange={setOpen}
         icon={Phone}
-        title="Sửa thông tin liên hệ"
-        formError={mutation.isError ? errorMessage(mutation.error, 'Cập nhật thất bại') : null}
+        title={t('profile.contact.editTitle')}
+        formError={mutation.isError ? errorMessage(mutation.error, t('profile.common.updateFailed')) : null}
         submitting={mutation.isPending}
         onSubmit={handleSubmit((values) => mutation.mutate(values))}
       >
         {anyLocked && (
           <p className="flex items-start gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-            <Lock className="mt-0.5 h-3 w-3 shrink-0" /> {LOCKED_HINT}
+            <Lock className="mt-0.5 h-3 w-3 shrink-0" /> {t('profile.locked.fieldHint')}
           </p>
         )}
         <div className="space-y-1.5">
           <Label htmlFor="phone" className="text-xs font-semibold text-slate-600">
-            Số điện thoại
+            {t('profile.contact.phone')}
           </Label>
           <Input id="phone" placeholder="09xxxxxxxx" {...register('phone')} />
           <FieldError message={errors.phone?.message} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="address" className="text-xs font-semibold text-slate-600">
-            Địa chỉ
+            {t('profile.contact.address')}
           </Label>
           <Input id="address" {...register('address')} />
           <FieldError message={errors.address?.message} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="dob" className="text-xs font-semibold text-slate-600">
-            Ngày sinh
+            {t('profile.contact.dob')}
           </Label>
           <Input id="dob" type="date" {...register('dob')} />
           <FieldError message={errors.dob?.message} />
@@ -513,14 +532,18 @@ function ContactSection({ user }: { user: User }) {
 
 // ── Bio section (always editable) ─────────────────────────────────
 
-const bioSchema = z.object({
-  bio: z.string().trim().max(280, 'Tối đa 280 ký tự').optional(),
-});
-type BioValues = z.infer<typeof bioSchema>;
+function makeBioSchema(t: (key: string) => string) {
+  return z.object({
+    bio: z.string().trim().max(280, t('profile.bio.tooLong')).optional(),
+  });
+}
+type BioValues = z.infer<ReturnType<typeof makeBioSchema>>;
 
 function BioSection({ user }: { user: User }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const bioSchema = useMemo(() => makeBioSchema(t), [t]);
   const {
     register,
     handleSubmit,
@@ -545,8 +568,8 @@ function BioSection({ user }: { user: User }) {
     <SectionPanel
       id="bio"
       icon={NotebookText}
-      title="Tiểu sử"
-      description="Một dòng giới thiệu ngắn về bạn"
+      title={t('profile.bio.title')}
+      description={t('profile.bio.description')}
       editDisabled={Boolean(user.isProfileLocked)}
       onEdit={() => {
         reset();
@@ -554,22 +577,22 @@ function BioSection({ user }: { user: User }) {
       }}
     >
       <p className="py-2.5 text-sm leading-relaxed text-slate-700">
-        {user.bio || <span className="text-slate-300">Chưa có tiểu sử — hãy giới thiệu đôi nét về bạn.</span>}
+        {user.bio || <span className="text-slate-300">{t('profile.bio.empty')}</span>}
       </p>
 
       <EditDialog
         open={open}
         onOpenChange={setOpen}
         icon={NotebookText}
-        title="Sửa tiểu sử"
-        formError={mutation.isError ? errorMessage(mutation.error, 'Cập nhật thất bại') : null}
+        title={t('profile.bio.editTitle')}
+        formError={mutation.isError ? errorMessage(mutation.error, t('profile.common.updateFailed')) : null}
         submitting={mutation.isPending}
         onSubmit={handleSubmit((values) => mutation.mutate(values))}
       >
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="bio" className="text-xs font-semibold text-slate-600">
-              Tiểu sử ngắn
+              {t('profile.bio.label')}
             </Label>
             <span
               className={cn(
@@ -583,7 +606,7 @@ function BioSection({ user }: { user: User }) {
           <Textarea
             id="bio"
             rows={4}
-            placeholder="Vd: Lập trình viên Android, thích cà phê và bug-free code."
+            placeholder={t('profile.bio.placeholder')}
             {...register('bio')}
           />
           <FieldError message={errors.bio?.message} />
@@ -596,6 +619,7 @@ function BioSection({ user }: { user: User }) {
 // ── Linked accounts section ───────────────────────────────────────
 
 function LinkedAccountsSection({ user }: { user: User }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: discordStatus } = useQuery({
     queryKey: ['discord-enabled'],
@@ -618,28 +642,28 @@ function LinkedAccountsSection({ user }: { user: User }) {
           </div>
           <div>
             <h2 className="mpc-font-display text-[0.95rem] font-semibold tracking-tight text-slate-900">
-              Tài khoản liên kết
+              {t('profile.linked.title')}
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500">Đăng nhập nhanh và kết nối bot của CLB</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('profile.linked.description')}</p>
           </div>
         </div>
         <div className="divide-y divide-slate-100 px-5">
           <div className="flex items-center justify-between gap-4 py-3">
             <span className="flex items-center gap-2.5 text-sm text-slate-700">
               <img src={`${import.meta.env.BASE_URL}google-icon.svg`} alt="" className="h-4 w-4" />
-              Google
+              {t('profile.linked.google')}
             </span>
             {user.googleId ? (
-              <Badge variant="success">Đã liên kết</Badge>
+              <Badge variant="success">{t('profile.linked.linked')}</Badge>
             ) : (
-              <Badge variant="outline">Chưa liên kết</Badge>
+              <Badge variant="outline">{t('profile.linked.notLinked')}</Badge>
             )}
           </div>
           {discordStatus?.enabled && (
             <div className="flex items-center justify-between gap-4 py-3">
               <span className="flex items-center gap-2.5 text-sm text-slate-700">
                 <DiscordGlyph className="h-4 w-4 text-[#5865F2]" />
-                Discord
+                {t('profile.linked.discord')}
                 {user.discordUsername && (
                   <span className="mpc-font-mono text-xs text-slate-400">@{user.discordUsername}</span>
                 )}
@@ -652,7 +676,7 @@ function LinkedAccountsSection({ user }: { user: User }) {
                   onClick={() => unlinkMutation.mutate()}
                   disabled={unlinkMutation.isPending}
                 >
-                  Huỷ liên kết
+                  {t('profile.linked.unlink')}
                 </Button>
               ) : (
                 <Button
@@ -662,7 +686,7 @@ function LinkedAccountsSection({ user }: { user: User }) {
                     window.location.href = '/connect/discord';
                   }}
                 >
-                  Liên kết
+                  {t('profile.linked.link')}
                 </Button>
               )}
             </div>
@@ -676,6 +700,7 @@ function LinkedAccountsSection({ user }: { user: User }) {
 // ── Security section ───────────────────────────────────────────────
 
 function SecuritySection({ user }: { user: User }) {
+  const { t } = useTranslation();
   const [sent, setSent] = useState(false);
   const mutation = useMutation({
     mutationFn: () => authApi.forgotPassword(user.email!),
@@ -691,21 +716,21 @@ function SecuritySection({ user }: { user: User }) {
           </div>
           <div>
             <h2 className="mpc-font-display text-[0.95rem] font-semibold tracking-tight text-slate-900">
-              Bảo mật
+              {t('profile.security.title')}
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500">Đổi mật khẩu đăng nhập</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('profile.security.description')}</p>
           </div>
         </div>
         <div className="px-5 py-4">
           {user.email ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-slate-600">
-                Gửi liên kết đổi mật khẩu tới{' '}
+                {t('profile.security.sendResetTo')}{' '}
                 <span className="mpc-font-mono text-slate-800">{user.email}</span>
               </p>
               {sent ? (
                 <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
-                  <ShieldCheck className="h-4 w-4" /> Đã gửi, kiểm tra hòm thư
+                  <ShieldCheck className="h-4 w-4" /> {t('profile.security.sent')}
                 </span>
               ) : (
                 <Button
@@ -720,14 +745,12 @@ function SecuritySection({ user }: { user: User }) {
                   ) : (
                     <Mail className="h-3.5 w-3.5" />
                   )}
-                  Gửi liên kết đổi mật khẩu
+                  {t('profile.security.sendButton')}
                 </Button>
               )}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">
-              Tài khoản chưa có email — liên hệ quản trị viên để đổi mật khẩu.
-            </p>
+            <p className="text-sm text-slate-500">{t('profile.security.noEmail')}</p>
           )}
         </div>
       </div>
@@ -738,6 +761,7 @@ function SecuritySection({ user }: { user: User }) {
 // ── Identity banner + top nav ─────────────────────────────────────
 
 function IdentityBanner({ user }: { user: User }) {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -763,7 +787,7 @@ function IdentityBanner({ user }: { user: User }) {
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
           className="group relative block h-20 w-20 overflow-hidden rounded-full border-2 border-white bg-slate-100 shadow-md ring-1 ring-slate-200"
-          title="Đổi ảnh đại diện"
+          title={t('profile.banner.changeAvatar')}
         >
           {user.avatar ? (
             <img src={user.avatar} alt="" className="h-full w-full object-cover" />
@@ -796,7 +820,11 @@ function IdentityBanner({ user }: { user: User }) {
           </span>
           <Badge variant={user.webRole === 'ADMIN' ? 'default' : 'outline'}>{user.webRole}</Badge>
           <span className="text-xs text-slate-400">
-            Thành viên từ {new Date(user.createdAt).toLocaleDateString('vi-VN')}
+            {t('profile.banner.memberSince', {
+              date: new Date(user.createdAt).toLocaleDateString(
+                i18n.language.startsWith('en') ? 'en-US' : 'vi-VN',
+              ),
+            })}
           </span>
         </div>
       </div>
@@ -805,6 +833,7 @@ function IdentityBanner({ user }: { user: User }) {
 }
 
 function TopBar({ user }: { user: User }) {
+  const { t } = useTranslation();
   const handleLogout = async () => {
     await profileApi.logout();
     window.location.href = '/login';
@@ -816,7 +845,7 @@ function TopBar({ user }: { user: User }) {
         <div className="mpc-font-display flex items-baseline gap-1.5 text-sm font-bold tracking-wide text-slate-900">
           MPC
           <span className="text-[0.65rem] font-semibold tracking-widest text-slate-400">
-            HỒ SƠ
+            {t('profile.topBar.wordmarkSuffix')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -825,11 +854,12 @@ function TopBar({ user }: { user: User }) {
               href="/admin/ui"
               className="inline-flex h-8 items-center rounded-lg px-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             >
-              Trang quản trị
+              {t('profile.topBar.adminLink')}
             </a>
           )}
+          <LanguageSwitcher className="" />
           <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="h-3.5 w-3.5" /> Đăng xuất
+            <LogOut className="h-3.5 w-3.5" /> {t('profile.topBar.logout')}
           </Button>
         </div>
       </div>
@@ -840,6 +870,7 @@ function TopBar({ user }: { user: User }) {
 // ── Page ───────────────────────────────────────────────────────────
 
 export function ProfilePage() {
+  const { t } = useTranslation();
   const { data: user, isLoading, isError } = useQuery({
     queryKey: ['profile'],
     queryFn: profileApi.me,
@@ -859,7 +890,7 @@ export function ProfilePage() {
   if (isLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center text-slate-400">
-        Đang tải...
+        {t('profile.loading')}
       </div>
     );
   }
@@ -874,7 +905,7 @@ export function ProfilePage() {
         {user.isProfileLocked && (
           <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <ShieldAlert className="h-4 w-4 shrink-0" />
-            Quản trị viên đã khoá chỉnh sửa hồ sơ của bạn.
+            {t('profile.locked.banner')}
           </div>
         )}
 

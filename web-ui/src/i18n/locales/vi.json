@@ -50,5 +50,85 @@
     "placeholderEmail": "m.example@gmail.com",
     "missingRequestId": "Thiếu request_id, vui lòng thử đăng nhập lại từ ứng dụng.",
     "sessionExpired": "Phiên đăng nhập đã hết hạn, vui lòng thử lại từ đầu."
+  },
+  "profile": {
+    "loading": "Đang tải...",
+    "topBar": {
+      "wordmarkSuffix": "HỒ SƠ",
+      "adminLink": "Trang quản trị",
+      "logout": "Đăng xuất"
+    },
+    "banner": {
+      "changeAvatar": "Đổi ảnh đại diện",
+      "memberSince": "Thành viên từ {{date}}"
+    },
+    "locked": {
+      "banner": "Quản trị viên đã khoá chỉnh sửa hồ sơ của bạn.",
+      "editTitle": "Hồ sơ đã bị quản trị viên khoá",
+      "fieldHint": "Trường này đã có dữ liệu — có thể sửa nhưng không thể để trống."
+    },
+    "common": {
+      "edit": "Sửa",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu...",
+      "updateFailed": "Cập nhật thất bại",
+      "notUpdated": "Chưa cập nhật"
+    },
+    "personal": {
+      "title": "Cá nhân",
+      "description": "Họ tên hiển thị trong hồ sơ MPC của bạn",
+      "editTitle": "Sửa thông tin cá nhân",
+      "lastName": "Họ",
+      "middleName": "Tên đệm",
+      "firstName": "Tên",
+      "lastNameRequired": "Vui lòng nhập họ",
+      "firstNameRequired": "Vui lòng nhập tên"
+    },
+    "student": {
+      "title": "Sinh viên",
+      "description": "Thông tin học vụ — khoá lại từng phần sau khi điền",
+      "editTitle": "Sửa thông tin sinh viên",
+      "mssv": "MSSV",
+      "className": "Lớp",
+      "classNameTooLong": "Tối đa 10 ký tự",
+      "faculty": "Khoa"
+    },
+    "contact": {
+      "title": "Liên hệ",
+      "description": "Số điện thoại, địa chỉ và ngày sinh của bạn",
+      "editTitle": "Sửa thông tin liên hệ",
+      "phone": "Số điện thoại",
+      "phoneInvalid": "Số điện thoại không hợp lệ",
+      "address": "Địa chỉ",
+      "dob": "Ngày sinh",
+      "dobInvalid": "Ngày sinh không hợp lệ"
+    },
+    "bio": {
+      "title": "Tiểu sử",
+      "description": "Một dòng giới thiệu ngắn về bạn",
+      "editTitle": "Sửa tiểu sử",
+      "label": "Tiểu sử ngắn",
+      "placeholder": "Vd: Lập trình viên Android, thích cà phê và bug-free code.",
+      "empty": "Chưa có tiểu sử — hãy giới thiệu đôi nét về bạn.",
+      "tooLong": "Tối đa 280 ký tự"
+    },
+    "linked": {
+      "title": "Tài khoản liên kết",
+      "description": "Đăng nhập nhanh và kết nối bot của CLB",
+      "google": "Google",
+      "linked": "Đã liên kết",
+      "notLinked": "Chưa liên kết",
+      "discord": "Discord",
+      "unlink": "Huỷ liên kết",
+      "link": "Liên kết"
+    },
+    "security": {
+      "title": "Bảo mật",
+      "description": "Đổi mật khẩu đăng nhập",
+      "sendResetTo": "Gửi liên kết đổi mật khẩu tới",
+      "sent": "Đã gửi, kiểm tra hòm thư",
+      "sendButton": "Gửi liên kết đổi mật khẩu",
+      "noEmail": "Tài khoản chưa có email — liên hệ quản trị viên để đổi mật khẩu."
+    }
   }
 }

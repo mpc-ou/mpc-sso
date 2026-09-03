@@ -50,5 +50,85 @@
     "placeholderEmail": "m.example@gmail.com",
     "missingRequestId": "Missing request_id, please try logging in again from the application.",
     "sessionExpired": "Login session has expired, please try again from the beginning."
+  },
+  "profile": {
+    "loading": "Loading...",
+    "topBar": {
+      "wordmarkSuffix": "PROFILE",
+      "adminLink": "Admin panel",
+      "logout": "Sign out"
+    },
+    "banner": {
+      "changeAvatar": "Change avatar",
+      "memberSince": "Member since {{date}}"
+    },
+    "locked": {
+      "banner": "An administrator has locked your profile from editing.",
+      "editTitle": "Profile locked by an administrator",
+      "fieldHint": "This field already has data — you can edit it but not clear it."
+    },
+    "common": {
+      "edit": "Edit",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "updateFailed": "Update failed",
+      "notUpdated": "Not set yet"
+    },
+    "personal": {
+      "title": "Personal",
+      "description": "Your name as shown on your MPC profile",
+      "editTitle": "Edit personal info",
+      "lastName": "Last name",
+      "middleName": "Middle name",
+      "firstName": "First name",
+      "lastNameRequired": "Please enter your last name",
+      "firstNameRequired": "Please enter your first name"
+    },
+    "student": {
+      "title": "Student",
+      "description": "Academic info — locks field by field once filled in",
+      "editTitle": "Edit student info",
+      "mssv": "Student ID",
+      "className": "Class",
+      "classNameTooLong": "Max 10 characters",
+      "faculty": "Faculty"
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "Your phone number, address, and date of birth",
+      "editTitle": "Edit contact info",
+      "phone": "Phone number",
+      "phoneInvalid": "Invalid phone number",
+      "address": "Address",
+      "dob": "Date of birth",
+      "dobInvalid": "Invalid date of birth"
+    },
+    "bio": {
+      "title": "Bio",
+      "description": "A short line introducing yourself",
+      "editTitle": "Edit bio",
+      "label": "Short bio",
+      "placeholder": "e.g. Android developer, coffee and bug-free code enthusiast.",
+      "empty": "No bio yet — tell us a bit about yourself.",
+      "tooLong": "Max 280 characters"
+    },
+    "linked": {
+      "title": "Linked accounts",
+      "description": "Quick sign-in and club bot integration",
+      "google": "Google",
+      "linked": "Linked",
+      "notLinked": "Not linked",
+      "discord": "Discord",
+      "unlink": "Unlink",
+      "link": "Link account"
+    },
+    "security": {
+      "title": "Security",
+      "description": "Change your sign-in password",
+      "sendResetTo": "Send a password reset link to",
+      "sent": "Sent — check your inbox",
+      "sendButton": "Send password reset link",
+      "noEmail": "This account has no email on file — contact an administrator to change your password."
+    }
   }
 }
