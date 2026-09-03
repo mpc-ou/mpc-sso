@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -32,6 +33,8 @@ interface DiscordUserResponse {
 
 @Injectable()
 export class DiscordService {
+  private readonly logger = new Logger(DiscordService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService<AppConfig, true>,
@@ -77,7 +80,10 @@ export class DiscordService {
       }),
     });
     if (!tokenRes.ok) {
-      throw new BadRequestException(bilingual('discord_state_mismatch'));
+      this.logger.error(
+        `Discord token exchange failed: ${tokenRes.status} ${await tokenRes.text()}`,
+      );
+      throw new BadRequestException(bilingual('discord_link_failed'));
     }
     const token = (await tokenRes.json()) as DiscordTokenResponse;
 
@@ -85,7 +91,10 @@ export class DiscordService {
       headers: { Authorization: `Bearer ${token.access_token}` },
     });
     if (!userRes.ok) {
-      throw new BadRequestException(bilingual('discord_state_mismatch'));
+      this.logger.error(
+        `Discord user fetch failed: ${userRes.status} ${await userRes.text()}`,
+      );
+      throw new BadRequestException(bilingual('discord_link_failed'));
     }
     const user = (await userRes.json()) as DiscordUserResponse;
 

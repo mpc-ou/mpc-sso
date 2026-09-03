@@ -41,6 +41,7 @@ type ErrorCode =
   | 'discord_not_configured'
   | 'discord_already_linked'
   | 'discord_state_mismatch'
+  | 'discord_link_failed'
   // internal
   | 'internal_server_error';
 
@@ -199,6 +200,11 @@ const messages: Record<ErrorCode, { error: string; vi: string; en: string }> = {
     error: 'discord_state_mismatch',
     vi: 'Yêu cầu liên kết Discord không hợp lệ, vui lòng thử lại.',
     en: 'Invalid Discord link request, please try again.',
+  },
+  discord_link_failed: {
+    error: 'discord_link_failed',
+    vi: 'Không thể liên kết với Discord lúc này, vui lòng thử lại.',
+    en: 'Could not link your Discord account right now, please try again.',
   },
   internal_server_error: {
     error: 'server_error',

@@ -7,20 +7,25 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
+import type { AppConfig } from '../../config/config';
 import { bilingual } from '../../common/errors';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AccessTokenData } from '../../common/guards/bearer-auth.guard';
 import { SelfAuthGuard } from '../../auth/guards/self-auth.guard';
-import { generateToken } from '../../lib/crypto';
+import { signState, verifyState } from '../../lib/crypto';
 import { DiscordService } from './discord.service';
 
-const DISCORD_STATE_COOKIE = 'discord_oauth_state';
+const STATE_MAX_AGE_MS = 10 * 60 * 1000;
 
 @Controller('connect/discord')
 @UseGuards(SelfAuthGuard)
 export class DiscordController {
-  constructor(private readonly discordService: DiscordService) {}
+  constructor(
+    private readonly discordService: DiscordService,
+    private readonly configService: ConfigService<AppConfig, true>,
+  ) {}
 
   @Get('enabled')
   enabled(): { enabled: boolean } {
@@ -28,15 +33,14 @@ export class DiscordController {
   }
 
   @Get()
-  start(@Res() res: Response): void {
-    const state = generateToken();
-    res.cookie(DISCORD_STATE_COOKIE, state, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 10 * 60 * 1000,
-      path: '/connect/discord',
-    });
+  start(@CurrentUser() tokenData: AccessTokenData, @Res() res: Response): void {
+    // Signed state carries its own CSRF binding (userId + timestamp + nonce +
+    // HMAC) so it doesn't need a round-tripped cookie — avoids state mismatches
+    // from browsers/extensions that drop cookies across the OAuth redirect.
+    const state = signState(
+      tokenData.userId,
+      this.configService.get('sessionSecret', { infer: true }),
+    );
     res.redirect(this.discordService.buildAuthorizeUrl(state));
   }
 
@@ -49,13 +53,16 @@ export class DiscordController {
     const code = typeof req.query.code === 'string' ? req.query.code : '';
     const returnedState =
       typeof req.query.state === 'string' ? req.query.state : '';
-    const expectedState = (req.cookies as Record<string, string> | undefined)?.[
-      DISCORD_STATE_COOKIE
-    ];
 
-    res.clearCookie(DISCORD_STATE_COOKIE, { path: '/connect/discord' });
+    const statePayload = returnedState
+      ? verifyState(
+          returnedState,
+          this.configService.get('sessionSecret', { infer: true }),
+          STATE_MAX_AGE_MS,
+        )
+      : null;
 
-    if (!code || !returnedState || returnedState !== expectedState) {
+    if (!code || !statePayload || statePayload !== tokenData.userId) {
       throw new BadRequestException(bilingual('discord_state_mismatch'));
     }
 
