@@ -58,20 +58,26 @@ function TipsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
         </p>
         <pre className="overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100">
 {`{
-  "event": "profile.updated",
+  "event": "member.changed",
   "timestamp": "2026-09-03T02:30:00.000Z",
-  "data": {
-    "actorId": "...", "actorDiscordId": "...",
-    "targetId": "...", "targetDiscordId": "...",
-    ...
-  }
+  "actor": {
+    "id": "...", "username": "admin", "fullName": "...",
+    "avatar": "...", "discordId": null, "discordUsername": null
+  },
+  "target": {
+    "id": "...", "username": "holedev", "fullName": "...",
+    "avatar": "...", "discordId": "111222333", "discordUsername": "hole"
+  },
+  "changedFields": [],
+  "ip": "1.2.3.4",
+  "data": { "action": "role-updated", "position": "VICE_PRESIDENT" }
 }`}
         </pre>
         <p>
-          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">actorDiscordId</code>/
-          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">targetDiscordId</code> chỉ xuất hiện khi người
-          dùng đó đã liên kết Discord — dùng trực tiếp để bot thao tác (đổi role, nickname, v.v.) mà không cần tự
-          tra cứu theo username.
+          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">actor</code>/
+          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">target</code> là <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">null</code> nếu không xác định được (vd: hành động hệ thống). Có sẵn tên, avatar và Discord ID (nếu đã liên
+          kết) nên không cần tự tra cứu lại — dùng <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">discordId</code> để bot thao tác trực tiếp (đổi role,
+          nickname, v.v.). <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">data</code> chứa chi tiết riêng của từng loại sự kiện (action, method, số lượng...).
         </p>
         <p>
           Mỗi request kèm header{' '}

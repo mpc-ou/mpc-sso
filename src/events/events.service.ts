@@ -3,7 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import type { AppConfig } from '../config/config';
 import { buildDiscordEmbed, isDiscordWebhookUrl } from './discord-embed';
 import { decryptSecret, hmacSha256Hex } from '../lib/crypto';
+import { getFullName } from '../lib/user-claims';
 import { PrismaService } from '../prisma/prisma.service';
+
+interface EventUser {
+  id: string;
+  username: string;
+  fullName: string;
+  avatar: string | null;
+  discordId: string | null;
+  discordUsername: string | null;
+}
 
 export const PUBLIC_EVENTS = [
   'profile.updated',
@@ -80,8 +90,8 @@ export class EventsService {
         this.lookupUser(input.actorId),
         this.lookupUser(input.targetId),
       ]);
-      const actorLabel = input.actorLabel ?? actor?.username;
-      const targetLabel = input.targetLabel ?? target?.username;
+      const actorLabel = input.actorLabel ?? actor?.fullName;
+      const targetLabel = input.targetLabel ?? target?.fullName;
 
       await this.prisma.auditLog.create({
         data: {
@@ -105,17 +115,16 @@ export class EventsService {
       });
       if (webhooks.length === 0) return;
 
+      // Self-sufficient envelope: who did it, who it happened to, and what
+      // changed — a bot shouldn't need to look anything up by id afterwards.
       const customPayload = JSON.stringify({
         event: input.event,
         timestamp: new Date().toISOString(),
-        data: {
-          actorId: input.actorId,
-          actorDiscordId: actor?.discordId ?? undefined,
-          targetId: input.targetId,
-          targetDiscordId: target?.discordId ?? undefined,
-          changedFields: input.changedFields,
-          ...extra,
-        },
+        actor: actor ?? null,
+        target: target ?? null,
+        changedFields: input.changedFields ?? [],
+        ip: input.ip ?? null,
+        data: extra ?? {},
       });
 
       const discordPayload = buildDiscordEmbed({
@@ -191,15 +200,18 @@ export class EventsService {
     }
   }
 
-  private async lookupUser(
-    userId?: string,
-  ): Promise<{ username: string; discordId: string | null } | undefined> {
+  private async lookupUser(userId?: string): Promise<EventUser | undefined> {
     if (!userId) return undefined;
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { username: true, discordId: true },
-    });
-    return user ?? undefined;
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return undefined;
+    return {
+      id: user.id,
+      username: user.username,
+      fullName: getFullName(user),
+      avatar: user.avatar,
+      discordId: user.discordId,
+      discordUsername: user.discordUsername,
+    };
   }
 
   private async pruneDeliveries(webhookId: string): Promise<void> {
