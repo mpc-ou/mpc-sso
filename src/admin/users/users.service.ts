@@ -213,6 +213,24 @@ export class UsersService {
     return { id, deleted: true };
   }
 
+  /** Locks or unlocks self-service profile editing for every user in the system */
+  async bulkSetProfileLocked(isProfileLocked: boolean, actorId?: string) {
+    const result = await this.prisma.user.updateMany({
+      data: { isProfileLocked },
+    });
+
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      extra: {
+        action: isProfileLocked ? 'locked-all' : 'unlocked-all',
+        count: result.count,
+      },
+    });
+
+    return { count: result.count };
+  }
+
   async bulkDelete(ids: string[], actorId?: string) {
     const users = await this.prisma.user.findMany({
       where: { id: { in: ids } },

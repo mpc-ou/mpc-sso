@@ -68,6 +68,17 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
+  @Patch('lock-all')
+  lockAll(
+    @Body('isProfileLocked') isProfileLocked: boolean,
+    @Req() req: Request,
+  ) {
+    return this.usersService.bulkSetProfileLocked(
+      isProfileLocked,
+      actorIdFrom(req),
+    );
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,

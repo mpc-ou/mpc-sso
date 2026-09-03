@@ -1,7 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit } from 'lucide-react';
+import {
+  Trash2,
+  Search,
+  Filter,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Eye,
+  Edit,
+  Lock,
+  LockOpen,
+} from 'lucide-react';
 import { usersApi } from '@/api/users';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -95,6 +106,22 @@ export function UserListPage() {
     },
   });
 
+  const bulkLockMutation = useMutation({
+    mutationFn: ({ ids, isProfileLocked }: { ids: string[]; isProfileLocked: boolean }) =>
+      Promise.all(ids.map((id) => usersApi.update(id, { isProfileLocked }))),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['users'] });
+      setSelectedIds([]);
+    },
+  });
+
+  const lockAllMutation = useMutation({
+    mutationFn: (isProfileLocked: boolean) => usersApi.lockAll(isProfileLocked),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   const handleSearchChange = (val: string) => {
@@ -150,24 +177,82 @@ export function UserListPage() {
     }
   };
 
+  const handleBulkLock = (isProfileLocked: boolean) => {
+    const verb = isProfileLocked ? 'khoá' : 'mở khoá';
+    if (confirm(`Bạn có chắc chắn muốn ${verb} sửa hồ sơ của ${selectedIds.length} người dùng đã chọn?`)) {
+      bulkLockMutation.mutate({ ids: selectedIds, isProfileLocked });
+    }
+  };
+
+  const handleLockAll = (isProfileLocked: boolean) => {
+    const verb = isProfileLocked ? 'khoá' : 'mở khoá';
+    if (
+      confirm(
+        `Bạn có chắc chắn muốn ${verb} sửa hồ sơ của TOÀN BỘ ${data?.total ?? 0} người dùng trong hệ thống? Hành động này áp dụng cho mọi user, không chỉ trang hiện tại.`,
+      )
+    ) {
+      lockAllMutation.mutate(isProfileLocked);
+    }
+  };
+
   const isAllSelected = data && data.items.length > 0 && selectedIds.length === data.items.length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">Users & Members</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {selectedIds.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={handleBulkDelete}
-              disabled={bulkDeleteMutation.isPending}
-              className="flex items-center gap-1.5"
-            >
-              <Trash2 className="h-4 w-4" />
-              Xoá đã chọn ({selectedIds.length})
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={() => handleBulkLock(true)}
+                disabled={bulkLockMutation.isPending}
+                className="flex items-center gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50"
+              >
+                <Lock className="h-4 w-4" />
+                Khoá đã chọn ({selectedIds.length})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleBulkLock(false)}
+                disabled={bulkLockMutation.isPending}
+                className="flex items-center gap-1.5 border-green-200 text-green-700 hover:bg-green-50"
+              >
+                <LockOpen className="h-4 w-4" />
+                Mở khoá đã chọn ({selectedIds.length})
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleBulkDelete}
+                disabled={bulkDeleteMutation.isPending}
+                className="flex items-center gap-1.5"
+              >
+                <Trash2 className="h-4 w-4" />
+                Xoá đã chọn ({selectedIds.length})
+              </Button>
+            </>
           )}
+          <Button
+            variant="outline"
+            onClick={() => handleLockAll(true)}
+            disabled={lockAllMutation.isPending}
+            className="flex items-center gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50"
+            title="Khoá sửa hồ sơ của mọi user trong hệ thống"
+          >
+            <Lock className="h-4 w-4" />
+            Khoá toàn bộ user
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleLockAll(false)}
+            disabled={lockAllMutation.isPending}
+            className="flex items-center gap-1.5 border-green-200 text-green-700 hover:bg-green-50"
+            title="Mở khoá sửa hồ sơ của mọi user trong hệ thống"
+          >
+            <LockOpen className="h-4 w-4" />
+            Mở khoá toàn bộ user
+          </Button>
           <Link to="/users/new" className={buttonVariants()}>
             Tạo user mới
           </Link>
@@ -324,15 +409,22 @@ export function UserListPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {user.isDisabled ? (
-                        <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset">
-                          Disabled
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset">
-                          Active
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {user.isDisabled ? (
+                          <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset">
+                            Disabled
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20 ring-inset">
+                            Active
+                          </span>
+                        )}
+                        {user.isProfileLocked && (
+                          <span title="Đã khoá sửa hồ sơ (SSO/profile)">
+                            <Lock className="h-3.5 w-3.5 text-amber-600" />
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-slate-600 text-xs">
                       {new Date(user.createdAt).toLocaleDateString('vi-VN')}
