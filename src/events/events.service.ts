@@ -29,6 +29,14 @@ function isPublicEvent(event: string): event is PublicEvent {
   return (PUBLIC_EVENTS as readonly string[]).includes(event);
 }
 
+/** e.g. "department.created" -> "created" — lets the audit log show a default action when a caller didn't pass one */
+function inferActionFromEvent(event: string): string | undefined {
+  const suffix = event.split('.').pop();
+  return suffix === 'created' || suffix === 'updated' || suffix === 'deleted'
+    ? suffix
+    : undefined;
+}
+
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
@@ -39,6 +47,15 @@ export class EventsService {
   ) {}
 
   async record(input: RecordEventInput): Promise<void> {
+    // If the caller didn't supply changedFields or extra detail, fall back to
+    // whatever the event name itself implies (e.g. "client.created" -> action: "created")
+    // so the audit log never shows a bare "—" for a routine create/update/delete.
+    const inferredAction = input.changedFields?.length
+      ? undefined
+      : inferActionFromEvent(input.event);
+    const extra =
+      input.extra ?? (inferredAction ? { action: inferredAction } : undefined);
+
     try {
       const actorLabel =
         input.actorLabel ?? (await this.lookupUsername(input.actorId));
@@ -55,7 +72,7 @@ export class EventsService {
           changedFields: input.changedFields?.length
             ? JSON.stringify(input.changedFields)
             : undefined,
-          metadata: input.extra ? JSON.stringify(input.extra) : undefined,
+          metadata: extra ? JSON.stringify(extra) : undefined,
           ip: input.ip,
         },
       });
@@ -80,7 +97,7 @@ export class EventsService {
         actorId: input.actorId,
         targetId: input.targetId,
         changedFields: input.changedFields,
-        ...input.extra,
+        ...extra,
       },
     });
 
