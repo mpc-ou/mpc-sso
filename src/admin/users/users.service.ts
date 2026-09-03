@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { EventsService } from '../../events/events.service';
 import { hashPassword } from '../../lib/password';
 import { stripPassword } from '../../lib/user-claims';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -15,7 +16,10 @@ const toSafeUser = stripPassword;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventsService,
+  ) {}
 
   async list(query: UserQueryDto) {
     const where: Prisma.UserWhereInput = {};
@@ -88,7 +92,7 @@ export class UsersService {
     return toSafeUser(user);
   }
 
-  async create(dto: CreateUserDto) {
+  async create(dto: CreateUserDto, actorId?: string) {
     const existingUsername = await this.prisma.user.findUnique({
       where: { username: dto.username },
     });
@@ -128,10 +132,17 @@ export class UsersService {
       },
     });
 
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      targetId: user.id,
+      extra: { action: 'created' },
+    });
+
     return toSafeUser(user);
   }
 
-  async update(id: string, dto: UpdateUserDto) {
+  async update(id: string, dto: UpdateUserDto, actorId?: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -165,21 +176,63 @@ export class UsersService {
       },
     });
 
+    const changedFields = Object.entries(dto)
+      .filter(([, value]) => value !== undefined)
+      .map(([key]) => key);
+
+    await this.events.record({
+      event: 'profile.updated',
+      actorId,
+      targetId: id,
+      changedFields,
+    });
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      targetId: id,
+      extra: { action: 'updated' },
+    });
+
     return toSafeUser(updated);
   }
 
-  async delete(id: string) {
+  async delete(id: string, actorId?: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
     await this.prisma.user.delete({ where: { id } });
+
+    await this.events.record({
+      event: 'member.changed',
+      actorId,
+      targetId: id,
+      targetLabel: user.username,
+      extra: { action: 'deleted' },
+    });
+
     return { id, deleted: true };
   }
 
-  async bulkDelete(ids: string[]) {
+  async bulkDelete(ids: string[], actorId?: string) {
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, username: true },
+    });
+
     await this.prisma.user.deleteMany({
       where: { id: { in: ids } },
     });
+
+    for (const user of users) {
+      await this.events.record({
+        event: 'member.changed',
+        actorId,
+        targetId: user.id,
+        targetLabel: user.username,
+        extra: { action: 'deleted' },
+      });
+    }
+
     return { count: ids.length };
   }
 }

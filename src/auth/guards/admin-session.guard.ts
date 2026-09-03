@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { touchActivity } from '../../lib/activity';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export const ADMIN_SESSION_COOKIE = 'admin_session';
@@ -48,6 +49,7 @@ export class AdminSessionGuard implements CanActivate {
     const adminUser: AdminSessionUser = { userId: user.id, sessionId };
     (request as Request & { adminUser: AdminSessionUser }).adminUser =
       adminUser;
+    touchActivity(this.prisma, user.id, request.ip);
     return true;
   }
 }

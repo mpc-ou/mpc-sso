@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { touchActivity } from '../../lib/activity';
 import { sha256Hex } from '../../lib/crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { bilingual } from '../errors';
@@ -19,6 +20,7 @@ export interface AccessTokenData {
 export async function resolveBearerAccessToken(
   prisma: PrismaService,
   authHeader: string | undefined,
+  ip?: string,
 ): Promise<AccessTokenData | null> {
   if (!authHeader?.startsWith('Bearer ')) return null;
 
@@ -27,6 +29,8 @@ export async function resolveBearerAccessToken(
 
   const record = await prisma.accessToken.findUnique({ where: { tokenHash } });
   if (!record || record.expiresAt < new Date()) return null;
+
+  touchActivity(prisma, record.userId, ip);
 
   return {
     userId: record.userId,
@@ -47,7 +51,11 @@ export class BearerAuthGuard implements CanActivate {
       throw new UnauthorizedException(bilingual('missing_bearer_token'));
     }
 
-    const tokenData = await resolveBearerAccessToken(this.prisma, authHeader);
+    const tokenData = await resolveBearerAccessToken(
+      this.prisma,
+      authHeader,
+      request.ip,
+    );
     if (!tokenData) {
       throw new UnauthorizedException(bilingual('token_not_found_or_expired'));
     }

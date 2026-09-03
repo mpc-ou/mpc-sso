@@ -4,11 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { bilingual } from '../common/errors';
+import { EventsService } from '../events/events.service';
 import { stripPassword } from '../lib/user-claims';
 import { PrismaService } from '../prisma/prisma.service';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 
-/** Once a user has filled these in, self-service edits can change them but never clear them back to empty */
 const IMMUTABLE_ONCE_SET_FIELDS = [
   'phone',
   'dob',
@@ -20,7 +20,10 @@ const IMMUTABLE_ONCE_SET_FIELDS = [
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventsService,
+  ) {}
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -48,7 +51,7 @@ export class ProfileService {
       }
     }
 
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
         firstName: dto.firstName,
@@ -64,5 +67,20 @@ export class ProfileService {
         bio: dto.bio,
       },
     });
+
+    const changedFields = Object.entries(dto)
+      .filter(([, value]) => value !== undefined)
+      .map(([key]) => key);
+
+    await this.events.record({
+      event: 'profile.updated',
+      actorId: userId,
+      actorLabel: user.username,
+      targetId: userId,
+      targetLabel: user.username,
+      changedFields,
+    });
+
+    return updated;
   }
 }

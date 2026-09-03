@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import type { PendingAuthorization, User } from '@prisma/client';
 import { bilingual } from '../common/errors';
 import type { AppConfig } from '../config/config';
+import { EventsService } from '../events/events.service';
 import { base64urlSha256, generateToken, sha256Hex } from '../lib/crypto';
 import { dummyVerify, verifyPassword } from '../lib/password';
 import { PrismaService } from '../prisma/prisma.service';
@@ -27,6 +28,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService<AppConfig, true>,
     private readonly tokenService: TokenService,
+    private readonly events: EventsService,
   ) {}
 
   private selfRedirectUri(): string {
@@ -158,7 +160,11 @@ export class AuthService {
     return client?.name;
   }
 
-  async login(dto: LoginDto): Promise<string> {
+  async login(
+    dto: LoginDto,
+    ip: string | undefined,
+    userAgent: string | undefined,
+  ): Promise<string> {
     const pending = await this.getPendingAuthorization(dto.request_id);
     if (!pending) {
       throw new BadRequestException(bilingual('session_expired'));
@@ -179,12 +185,14 @@ export class AuthService {
       throw new UnauthorizedException(bilingual('invalid_credentials'));
     }
 
-    return this.completeAuthorization(pending, user);
+    return this.completeAuthorization(pending, user, 'password', ip, userAgent);
   }
 
   async completeGoogleLogin(
     requestId: string,
     profile: GoogleProfile,
+    ip: string | undefined,
+    userAgent: string | undefined,
   ): Promise<string> {
     const pending = await this.getPendingAuthorization(requestId);
     if (!pending) {
@@ -212,12 +220,15 @@ export class AuthService {
       throw new UnauthorizedException(bilingual('account_disabled'));
     }
 
-    return this.completeAuthorization(pending, user);
+    return this.completeAuthorization(pending, user, 'google', ip, userAgent);
   }
 
   private async completeAuthorization(
     pending: PendingAuthorization,
     user: User,
+    method: 'password' | 'google',
+    ip: string | undefined,
+    userAgent: string | undefined,
   ): Promise<string> {
     const code = generateToken();
 
@@ -236,7 +247,18 @@ export class AuthService {
         },
       }),
       this.prisma.pendingAuthorization.delete({ where: { id: pending.id } }),
+      this.prisma.loginEvent.create({
+        data: { userId: user.id, method, ip, userAgent },
+      }),
     ]);
+
+    await this.events.record({
+      event: 'auth.login',
+      actorId: user.id,
+      targetId: user.id,
+      ip,
+      extra: { method },
+    });
 
     const redirectUrl = new URL(pending.redirectUri);
     redirectUrl.searchParams.set('code', code);

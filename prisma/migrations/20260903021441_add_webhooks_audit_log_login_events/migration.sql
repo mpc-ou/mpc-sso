@@ -19,7 +19,7 @@ CREATE TABLE "webhooks" (
     "id" TEXT NOT NULL,
     "event" TEXT NOT NULL,
     "url" TEXT NOT NULL,
-    "secretHash" TEXT NOT NULL,
+    "secretEnc" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdBy" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

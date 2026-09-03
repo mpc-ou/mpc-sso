@@ -162,8 +162,15 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async postLogin(@Body() dto: LoginDto): Promise<{ redirectUrl: string }> {
-    const redirectUrl = await this.authService.login(dto);
+  async postLogin(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+  ): Promise<{ redirectUrl: string }> {
+    const redirectUrl = await this.authService.login(
+      dto,
+      req.ip,
+      req.header('User-Agent'),
+    );
     return { redirectUrl };
   }
 
@@ -185,6 +192,8 @@ export class AuthController {
     const redirectUrl = await this.authService.completeGoogleLogin(
       requestId,
       profile,
+      req.ip,
+      req.header('User-Agent'),
     );
     res.redirect(redirectUrl);
   }

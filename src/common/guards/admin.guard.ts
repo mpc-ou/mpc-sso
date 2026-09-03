@@ -7,8 +7,12 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { timingSafeEqual } from 'node:crypto';
 import type { Request } from 'express';
-import { ADMIN_SESSION_COOKIE } from '../../auth/guards/admin-session.guard';
+import {
+  ADMIN_SESSION_COOKIE,
+  type AdminSessionUser,
+} from '../../auth/guards/admin-session.guard';
 import type { AppConfig } from '../../config/config';
+import { touchActivity } from '../../lib/activity';
 import { PrismaService } from '../../prisma/prisma.service';
 
 function safeEqual(a: string, b: string): boolean {
@@ -54,6 +58,10 @@ export class AdminGuard implements CanActivate {
           where: { id: session.userId },
         });
         if (user && !user.isDisabled && user.webRole === 'ADMIN') {
+          const adminUser: AdminSessionUser = { userId: user.id, sessionId };
+          (request as Request & { adminUser: AdminSessionUser }).adminUser =
+            adminUser;
+          touchActivity(this.prisma, user.id, request.ip);
           return true;
         }
       }

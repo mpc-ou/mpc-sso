@@ -7,12 +7,15 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
+import { actorIdFrom } from '../../common/admin-actor';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { UserQueryDto } from './dto/user-query.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -29,8 +32,8 @@ export class UsersController {
   ) {}
 
   @Post()
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
+  create(@Body() dto: CreateUserDto, @Req() req: Request) {
+    return this.usersService.create(dto, actorIdFrom(req));
   }
 
   @Post('upload-avatar')
@@ -66,17 +69,21 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @Req() req: Request,
+  ) {
+    return this.usersService.update(id, dto, actorIdFrom(req));
   }
 
   @Delete('bulk')
-  bulkDelete(@Body('ids') ids: string[]) {
-    return this.usersService.bulkDelete(ids);
+  bulkDelete(@Body('ids') ids: string[], @Req() req: Request) {
+    return this.usersService.bulkDelete(ids, actorIdFrom(req));
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.delete(id);
+  remove(@Param('id') id: string, @Req() req: Request) {
+    return this.usersService.delete(id, actorIdFrom(req));
   }
 }

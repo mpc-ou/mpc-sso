@@ -10,6 +10,7 @@ import {
   resolveBearerAccessToken,
 } from '../../common/guards/bearer-auth.guard';
 import { bilingual } from '../../common/errors';
+import { touchActivity } from '../../lib/activity';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export const SSO_SESSION_COOKIE = 'sso_session';
@@ -51,6 +52,7 @@ export class SelfAuthGuard implements CanActivate {
           };
           (request as Request & { tokenData: AccessTokenData }).tokenData =
             tokenData;
+          touchActivity(this.prisma, user.id, request.ip);
           return true;
         }
       }
@@ -59,6 +61,7 @@ export class SelfAuthGuard implements CanActivate {
     const tokenData = await resolveBearerAccessToken(
       this.prisma,
       request.header('Authorization'),
+      request.ip,
     );
     if (!tokenData) {
       throw new UnauthorizedException(bilingual('token_not_found_or_expired'));
