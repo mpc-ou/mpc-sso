@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PaginationDto } from '../../common/dto/pagination.dto';
+import { EventsService } from '../../events/events.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateClubRoleDto } from './dto/create-club-role.dto';
 import type { UpdateClubRoleDto } from './dto/update-club-role.dto';
 
 @Injectable()
 export class ClubRolesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventsService,
+  ) {}
 
   async list(pagination: PaginationDto) {
     const [items, total] = await Promise.all([
@@ -27,7 +31,7 @@ export class ClubRolesService {
     };
   }
 
-  async create(dto: CreateClubRoleDto) {
+  async create(dto: CreateClubRoleDto, actorId?: string, ip?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: dto.userId },
     });
@@ -40,11 +44,29 @@ export class ClubRolesService {
       if (!department) throw new NotFoundException('Department not found');
     }
 
-    return this.prisma.clubRole.create({ data: dto });
+    const clubRole = await this.prisma.clubRole.create({ data: dto });
+
+    await this.events.record({
+      event: 'club-role.created',
+      actorId,
+      targetId: clubRole.id,
+      targetLabel: `${dto.position} · ${user.username}`,
+      ip,
+    });
+
+    return clubRole;
   }
 
-  async update(id: string, dto: UpdateClubRoleDto) {
-    const clubRole = await this.prisma.clubRole.findUnique({ where: { id } });
+  async update(
+    id: string,
+    dto: UpdateClubRoleDto,
+    actorId?: string,
+    ip?: string,
+  ) {
+    const clubRole = await this.prisma.clubRole.findUnique({
+      where: { id },
+      include: { user: true },
+    });
     if (!clubRole) throw new NotFoundException('Club role not found');
 
     if (dto.departmentId) {
@@ -54,14 +76,44 @@ export class ClubRolesService {
       if (!department) throw new NotFoundException('Department not found');
     }
 
-    return this.prisma.clubRole.update({ where: { id }, data: dto });
+    const updated = await this.prisma.clubRole.update({
+      where: { id },
+      data: dto,
+    });
+
+    const changedFields = Object.entries(dto)
+      .filter(([, value]) => value !== undefined)
+      .map(([key]) => key);
+
+    await this.events.record({
+      event: 'club-role.updated',
+      actorId,
+      targetId: id,
+      targetLabel: `${updated.position} · ${clubRole.user.username}`,
+      changedFields,
+      ip,
+    });
+
+    return updated;
   }
 
-  async remove(id: string) {
-    const clubRole = await this.prisma.clubRole.findUnique({ where: { id } });
+  async remove(id: string, actorId?: string, ip?: string) {
+    const clubRole = await this.prisma.clubRole.findUnique({
+      where: { id },
+      include: { user: true },
+    });
     if (!clubRole) throw new NotFoundException('Club role not found');
 
     await this.prisma.clubRole.delete({ where: { id } });
+
+    await this.events.record({
+      event: 'club-role.deleted',
+      actorId,
+      targetId: id,
+      targetLabel: `${clubRole.position} · ${clubRole.user.username}`,
+      ip,
+    });
+
     return { id, deleted: true };
   }
 }

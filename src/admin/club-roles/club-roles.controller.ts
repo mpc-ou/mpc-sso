@@ -7,9 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { actorIdFrom } from '../../common/admin-actor';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CreateClubRoleDto } from './dto/create-club-role.dto';
 import { UpdateClubRoleDto } from './dto/update-club-role.dto';
@@ -21,8 +24,8 @@ export class ClubRolesController {
   constructor(private readonly clubRolesService: ClubRolesService) {}
 
   @Post()
-  create(@Body() dto: CreateClubRoleDto) {
-    return this.clubRolesService.create(dto);
+  create(@Body() dto: CreateClubRoleDto, @Req() req: Request) {
+    return this.clubRolesService.create(dto, actorIdFrom(req), req.ip);
   }
 
   @Get()
@@ -31,12 +34,16 @@ export class ClubRolesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateClubRoleDto) {
-    return this.clubRolesService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateClubRoleDto,
+    @Req() req: Request,
+  ) {
+    return this.clubRolesService.update(id, dto, actorIdFrom(req), req.ip);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clubRolesService.remove(id);
+  remove(@Param('id') id: string, @Req() req: Request) {
+    return this.clubRolesService.remove(id, actorIdFrom(req), req.ip);
   }
 }
