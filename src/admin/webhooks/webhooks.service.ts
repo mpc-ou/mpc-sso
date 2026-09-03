@@ -4,6 +4,7 @@ import type { Webhook, WebhookDelivery } from '@prisma/client';
 import type { AppConfig } from '../../config/config';
 import { EventsService } from '../../events/events.service';
 import { encryptSecret, generateToken } from '../../lib/crypto';
+import { assertSafeWebhookUrl } from '../../lib/ssrf-guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateWebhookDto } from './dto/create-webhook.dto';
 import type { UpdateWebhookDto } from './dto/update-webhook.dto';
@@ -31,6 +32,8 @@ export class WebhooksService {
 
   /** Returns the plaintext secret exactly once — it is never retrievable again */
   async create(dto: CreateWebhookDto, actorId?: string) {
+    await assertSafeWebhookUrl(dto.url);
+
     const secret = generateToken();
     const secretEnc = encryptSecret(
       secret,
@@ -59,6 +62,10 @@ export class WebhooksService {
   async update(id: string, dto: UpdateWebhookDto, actorId?: string) {
     const webhook = await this.prisma.webhook.findUnique({ where: { id } });
     if (!webhook) throw new NotFoundException('Webhook not found');
+
+    if (dto.url) {
+      await assertSafeWebhookUrl(dto.url);
+    }
 
     const updated = await this.prisma.webhook.update({
       where: { id },

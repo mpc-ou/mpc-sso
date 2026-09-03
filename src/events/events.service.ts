@@ -113,6 +113,9 @@ export class EventsService {
           'X-MPC-Event': event,
         },
         body: payload,
+        // Never follow redirects — a compromised/malicious target could 302
+        // to an internal address, bypassing the SSRF check done at write time.
+        redirect: 'manual',
         signal: AbortSignal.timeout(DELIVERY_TIMEOUT_MS),
       });
       statusCode = res.status;
