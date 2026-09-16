@@ -30,7 +30,7 @@ describe('member-utils', () => {
       expect(computeCurrentDepartment(roles)).toBe('PROGRAMMING');
     });
 
-    it('should return null if latest role has no department', () => {
+    it('should skip roles without a department and use the latest one that has one', () => {
       const roles = [
         {
           startAt: '2023-01-01T00:00:00.000Z',
@@ -39,6 +39,17 @@ describe('member-utils', () => {
         {
           startAt: '2021-05-01T00:00:00.000Z',
           department: { code: 'DESIGN' },
+        },
+      ];
+
+      expect(computeCurrentDepartment(roles)).toBe('DESIGN');
+    });
+
+    it('should return null when no role has a department', () => {
+      const roles = [
+        {
+          startAt: '2023-01-01T00:00:00.000Z',
+          department: null,
         },
       ];
 

@@ -13,7 +13,9 @@ export interface ClubRoleCalculationItem {
 }
 
 /**
- * Returns the department code of the user's latest club role (sorted by startAt descending).
+ * Returns the department code of the user's latest club role that has a department
+ * (sorted by startAt descending). Roles without a department (e.g. club-wide leadership
+ * positions like PRESIDENT/VICE_PRESIDENT) are ignored when determining the current department.
  * E.g., 'PROGRAMMING'
  */
 export function computeCurrentDepartment(
@@ -21,7 +23,10 @@ export function computeCurrentDepartment(
 ): string | null {
   if (!clubRoles || clubRoles.length === 0) return null;
 
-  const sorted = [...clubRoles].sort(
+  const withDepartment = clubRoles.filter((role) => role.department?.code);
+  if (withDepartment.length === 0) return null;
+
+  const sorted = [...withDepartment].sort(
     (a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime(),
   );
 
