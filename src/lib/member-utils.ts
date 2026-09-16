@@ -70,3 +70,15 @@ export function checkIsAlumni(
     return now - start > fourYearsInMs;
   });
 }
+
+export function computeIsLeave(
+  clubRoles?: ClubRoleCalculationItem[] | null,
+): boolean {
+  if (!clubRoles || clubRoles.length === 0) return false;
+  return clubRoles.some(
+    (role) =>
+      (role.position === 'DEPARTMENT_MEMBER' ||
+        role.position === 'COLLABORATOR') &&
+      role.endAt != null,
+  );
+}

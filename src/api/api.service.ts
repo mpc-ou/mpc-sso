@@ -10,6 +10,7 @@ import {
   checkIsAlumni,
   computeClassOf,
   computeCurrentDepartment,
+  computeIsLeave,
 } from '../lib/member-utils';
 import { stripPassword } from '../lib/user-claims';
 import { PrismaService } from '../prisma/prisma.service';
@@ -31,11 +32,13 @@ export class ApiService {
     const isAlumni = checkIsAlumni(u.clubRoles || []);
     const currentDepartment = computeCurrentDepartment(u.clubRoles || []);
     const classOf = computeClassOf(u.clubRoles || []);
+    const isLeave = computeIsLeave(u.clubRoles || []);
 
     return {
       ...safe,
       currentDepartment,
       classOf,
+      isLeave,
       member: u.firstName
         ? {
             id: u.id,
@@ -57,6 +60,7 @@ export class ApiService {
             Alumni: isAlumni,
             currentDepartment,
             classOf,
+            isLeave,
           }
         : null,
     };
@@ -66,6 +70,7 @@ export class ApiService {
     const isAlumni = checkIsAlumni(u.clubRoles || []);
     const currentDepartment = computeCurrentDepartment(u.clubRoles || []);
     const classOf = computeClassOf(u.clubRoles || []);
+    const isLeave = computeIsLeave(u.clubRoles || []);
 
     return {
       id: u.id,
@@ -92,6 +97,7 @@ export class ApiService {
       Alumni: isAlumni,
       currentDepartment,
       classOf,
+      isLeave,
     };
   }
 

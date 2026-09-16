@@ -82,7 +82,6 @@ export class UsersService {
         skip: query.skip,
         take: query.take,
         orderBy,
-        include: { clubRoles: { include: { department: true } } },
       }),
       this.prisma.user.count({ where }),
     ]);
