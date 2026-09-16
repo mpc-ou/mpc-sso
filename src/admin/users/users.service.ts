@@ -234,8 +234,6 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
-    await this.prisma.user.delete({ where: { id } });
-
     await this.events.record({
       event: 'member.changed',
       actorId,
@@ -244,6 +242,8 @@ export class UsersService {
       extra: { action: 'deleted' },
       ip,
     });
+
+    await this.prisma.user.delete({ where: { id } });
 
     return { id, deleted: true };
   }

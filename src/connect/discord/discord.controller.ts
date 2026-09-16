@@ -67,13 +67,13 @@ export class DiscordController {
     }
 
     const profile = await this.discordService.exchangeCodeForProfile(code);
-    await this.discordService.link(tokenData.userId, profile);
+    await this.discordService.link(tokenData.userId, profile, req.ip);
 
     res.redirect('/profile/ui');
   }
 
   @Delete()
-  unlink(@CurrentUser() tokenData: AccessTokenData) {
-    return this.discordService.unlink(tokenData.userId);
+  unlink(@CurrentUser() tokenData: AccessTokenData, @Req() req: Request) {
+    return this.discordService.unlink(tokenData.userId, req.ip);
   }
 }

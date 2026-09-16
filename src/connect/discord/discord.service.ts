@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { bilingual } from '../../common/errors';
 import type { AppConfig } from '../../config/config';
+import { EventsService } from '../../events/events.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize';
@@ -38,6 +39,7 @@ export class DiscordService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService<AppConfig, true>,
+    private readonly events: EventsService,
   ) {}
 
   isConfigured(): boolean {
@@ -107,9 +109,9 @@ export class DiscordService {
     };
   }
 
-  async link(userId: string, profile: DiscordProfile) {
+  async link(userId: string, profile: DiscordProfile, ip?: string) {
     try {
-      return await this.prisma.user.update({
+      const updated = await this.prisma.user.update({
         where: { id: userId },
         data: {
           discordId: profile.id,
@@ -118,6 +120,28 @@ export class DiscordService {
           discordLinkedAt: new Date(),
         },
       });
+
+      await this.events.record({
+        event: 'member.changed',
+        actorId: userId,
+        actorLabel: updated.username,
+        targetId: userId,
+        targetLabel: updated.username,
+        changedFields: [
+          'discordId',
+          'discordUsername',
+          'discordAvatar',
+          'discordLinkedAt',
+        ],
+        extra: {
+          action: 'discord-linked',
+          discordId: profile.id,
+          discordUsername: profile.username,
+        },
+        ip,
+      });
+
+      return updated;
     } catch (err) {
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&
@@ -129,8 +153,8 @@ export class DiscordService {
     }
   }
 
-  async unlink(userId: string) {
-    return this.prisma.user.update({
+  async unlink(userId: string, ip?: string) {
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
         discordId: null,
@@ -139,5 +163,25 @@ export class DiscordService {
         discordLinkedAt: null,
       },
     });
+
+    await this.events.record({
+      event: 'member.changed',
+      actorId: userId,
+      actorLabel: updated.username,
+      targetId: userId,
+      targetLabel: updated.username,
+      changedFields: [
+        'discordId',
+        'discordUsername',
+        'discordAvatar',
+        'discordLinkedAt',
+      ],
+      extra: {
+        action: 'discord-unlinked',
+      },
+      ip,
+    });
+
+    return updated;
   }
 }

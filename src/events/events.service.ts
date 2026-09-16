@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type { AppConfig } from '../config/config';
 import { buildDiscordEmbed, isDiscordWebhookUrl } from './discord-embed';
 import { decryptSecret, hmacSha256Hex } from '../lib/crypto';
+import { computeClassOf, computeCurrentDepartment } from '../lib/member-utils';
 import { getFullName } from '../lib/user-claims';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -13,6 +14,8 @@ interface EventUser {
   avatar: string | null;
   discordId: string | null;
   discordUsername: string | null;
+  currentDepartment: string | null;
+  classOf: number | null;
 }
 
 export const PUBLIC_EVENTS = ['member.changed', 'auth.login'] as const;
@@ -134,13 +137,15 @@ export class EventsService {
         ip: input.ip,
       });
 
-      for (const webhook of webhooks) {
-        void this.deliver(
-          webhook,
-          input.event,
-          isDiscordWebhookUrl(webhook.url) ? discordPayload : customPayload,
-        );
-      }
+      await Promise.allSettled(
+        webhooks.map((webhook) =>
+          this.deliver(
+            webhook,
+            input.event,
+            isDiscordWebhookUrl(webhook.url) ? discordPayload : customPayload,
+          ),
+        ),
+      );
     } catch (err) {
       this.logger.error(`Failed to record event ${input.event}`, err as Error);
     }
@@ -176,6 +181,10 @@ export class EventsService {
       });
       statusCode = res.status;
       ok = res.ok;
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        error = `HTTP ${res.status}${text ? `: ${text.slice(0, 200)}` : ''}`;
+      }
     } catch (err) {
       error = formatDeliveryError(err);
     }
@@ -198,7 +207,10 @@ export class EventsService {
 
   private async lookupUser(userId?: string): Promise<EventUser | undefined> {
     if (!userId) return undefined;
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { clubRoles: { include: { department: true } } },
+    });
     if (!user) return undefined;
     return {
       id: user.id,
@@ -207,6 +219,8 @@ export class EventsService {
       avatar: user.avatar,
       discordId: user.discordId,
       discordUsername: user.discordUsername,
+      currentDepartment: computeCurrentDepartment(user.clubRoles),
+      classOf: computeClassOf(user.clubRoles),
     };
   }
 
